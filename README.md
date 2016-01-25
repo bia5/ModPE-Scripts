@@ -3,4 +3,6 @@ This is a collection of all my modpe scripts, import into blocklauncher to use. 
 
 Here is a list of mods and what they do:
 
--Nothing
+-SurvivalPE:
+	This is a WIP Mod that doesnt do much now, but it will in the future.
+	The Basic features are the mulitblock steam generators, the spin wheel, and basic energy.

@@ -10,7 +10,6 @@ visit http://creativecommons.org/licenses/by-sa/4.0/.
 TODO
 ===============
 -Textures
--
 */
 
 var machines = {

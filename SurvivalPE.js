@@ -13,11 +13,15 @@ TODO
 -Generators
 -Fix Generators Ids
 -Rework multiblock steam generator
+-Add Log
+-GUI
 */
 
 /*
 Updates
 ===============
+-v0.1.2
+  Added Solar Generator, still have to add blockId.
 -v0.1.1
   Adds a few more options to create your energy, like coal, lava, solar and steam generators.
   Also fixed versions so we will be in alpha stages for awhile
@@ -38,7 +42,7 @@ var generators = {
 	solar: {},
 	steam: {}
 }
-var version = "0.1.1";
+var version = "0.1.2";
 var tick = 0;
 var Data = {};
 var lastXYZ = [];
@@ -229,7 +233,7 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 		}
 	}
 	
-	//Blue Wrench
+	//Pipes
 	if(itemId == 500){
 		Entity.setCarriedItem(Player.getEntity(),500,Player.getCarriedItemCount()-1,0);
 		placePipe(blockPos[0],blockPos[1],blockPos[2],0);
@@ -302,7 +306,8 @@ function modTick(){
 				generators.solar[blockPos].energy+=10;
 			}
 		}
-		if(generators.solar[blockPos].energy > 99 && isWire(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) && Level.getData(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) == 4){
+		if(generators.solar[blockPos].energy > 99 && isWire(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) && Level.getData(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) == 4
+		){
 			generators.solar[blockPos].energy-=100;
 			sendEnergy(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z,generators.solar[blockPos].x,generators.solar[blockPos].y,generators.solar[blockPos].z,100);
 		}

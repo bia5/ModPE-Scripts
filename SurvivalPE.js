@@ -10,6 +10,19 @@ visit http://creativecommons.org/licenses/by-sa/4.0/.
 TODO
 ===============
 -Textures
+-Generators
+-Fix Generators Ids
+-Rework multiblock steam generator
+*/
+
+/*
+Updates
+===============
+-v0.1.1
+  Adds a few more options to create your energy, like coal, lava, solar and steam generators.
+  Also fixed versions so we will be in alpha stages for awhile
+-v0.1.0
+  Added a basic Muliblock steam generator. Also includes spinwheel.
 */
 
 var machines = {
@@ -18,7 +31,14 @@ var machines = {
 	steamConverter:{},
 	spinWheel:{}
 }
-var version = "0.2.0";
+var generators = {
+	coal: {},
+	lava: {},
+	gunpowder: {},
+	solar: {},
+	steam: {}
+}
+var version = "0.1.1";
 var Data = {};
 var lastXYZ = [];
 var blockPos;
@@ -29,6 +49,15 @@ var tankMaxSteam = 10000;
 var steamConverterMaxSteam = 500;
 var steamConverterMaxEnergy = 500;
 var spinWheelMaxEnergy = 10000;
+var coalGenMaxEnergy = 500;
+var coalGenMaxCoal = 16;
+var lavaGenMaxEnergy = 500;
+var lavaGenMaxLava = 1000;
+var solarGenMaxEnergy = 500;
+var steamGenMaxEnergy = 500;
+var steamGenMaxSteam = 500;
+var steamGenMaxCoal = 16;
+var steamGenMaxWater = 1000;
 
 ModPE.setItem(500,"apple",0,"Steam Pipe");
 ModPE.setItem(501,"apple",0,"Extraction Pipe (Steam)");
@@ -44,6 +73,15 @@ Block.defineBlock(33,"Steam Converter",["iron_block",0]);
 Block.setDestroyTime(33,0);
 Block.defineBlock(34,"Spin Wheel",["iron_block",0]);
 Block.setDestroyTime(34,0);
+//Update Item Ids
+Block.defineBlock(nil,"Coal Generator",["iron_block",0]);
+Block.setDestroyTime(nil,0);
+Block.defineBlock(nil,"Lava Generator",["iron_block",0]);
+Block.setDestroyTime(nil,0);
+Block.defineBlock(nil,"Solar Generator",["iron_block",0]);
+Block.setDestroyTime(nil,0);
+Block.defineBlock(nil,"Steam Generator",["iron_block",0]);
+Block.setDestroyTime(nil,0);
 Block.defineBlock(191,"Pipe",["iron_block",0],7,false,0);
 Block.defineBlock(188,"Pipe",["iron_block",0],7,false,0);
 Block.defineBlock(189,"Pipe",["iron_block",0],7,false,0);
@@ -60,11 +98,13 @@ for(var i=188;i<192;i++){
 
 function newLevel(){
 	Data.loadMachines();
+	Data.loadGenerators();
 	clientMessage("SurvivalPE is made by CrazyWolfy23");
 }
 
 function leaveGame(){
 	Data.saveMachines();
+	Data.saveGenerators();
 }
 
 function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
@@ -85,17 +125,64 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 				break;
 		}
 	}
+	
+	//Generator Stuffs ITEMIDS!
+	if(itemId == nil){
+		if(!generators.coal[blockPos]){
+			generators.coal[blockPos] = {
+				x:blockPos[0],
+				y:blockPos[1],
+				z:blockPos[2],
+				energy:0,
+				coal:0,
+				timer:0
+			}
+		}
+	}
+	if(itemId == nil){
+		if(!generators.lava[blockPos]){
+			generators.lava[blockPos] = {
+				x:blockPos[0],
+				y:blockPos[1],
+				z:blockPos[2],
+				energy:0,
+				lava:0,
+				timer:0
+			}
+		}
+	}
+	if(itemId == nil){
+		if(!generators.solar[blockPos]){
+			generators.solar[blockPos] = {
+				x:blockPos[0],
+				y:blockPos[1],
+				z:blockPos[2],
+				energy:0,
+				isActive:false
+			}
+		}
+	}
+	if(itemId == nil){
+		if(!generators.steam[blockPos]){
+			generators.steam[blockPos] = {
+				x:blockPos[0],
+				y:blockPos[1],
+				z:blockPos[2],
+				energy:0,
+				steam:0,
+				water:0,
+				coal:0,
+				timer:0
+			}
+		}
+	}
+	
+	//Steam Stuffs
 	if(blockId == 28 && machines.boilers[[x,y,z]]){
 		if(itemId == 263 && machines.boilers[[x,y,z]].coal < boilerMaxCoal){
 			machines.boilers[[x,y,z]].coal++;
 			Entity.setCarriedItem(Player.getEntity(), 263, Player.getCarriedItemCount()-1,0);
 		}
-	}
-	if(blockId == 29){
-		clientMessage(machines.tanks[[x,y,z]].steam);
-	}
-	if(blockId == 28){
-		clientMessage(machines.boilers[[x,y,z]].steam);
 	}
 	if(itemId == 28){
 		if(!machines.boilers[blockPos]){
@@ -140,6 +227,8 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 			}
 		}
 	}
+	
+	//Blue Wrench
 	if(itemId == 500){
 		Entity.setCarriedItem(Player.getEntity(),500,Player.getCarriedItemCount()-1,0);
 		placePipe(blockPos[0],blockPos[1],blockPos[2],0);
@@ -159,6 +248,27 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 }
 
 function destroyBlock(x,y,z,side){
+	//Generators ITEMIDS!
+	if(Player.getPointedBlockId() == nil && generators.coal[[x,y,z]]){
+		if(generators.coal[[x,y,z]].coal > 0){
+			Level.dropItem(x,y,z,0,263,generators.coal[[x,y,z]].coal);
+		}
+		delete generators.coal[[x,y,z]];
+	}
+	if(Player.getPointedBlockId() == nil && generators.lava[[x,y,z]]){
+		delete generators.lava[[x,y,z]];
+	}
+	if(Player.getPointedBlockId() == nil && generators.solar[[x,y,z]]){
+		delete generators.solar[[x,y,z]];
+	}
+	if(Player.getPointedBlockId() == nil && generators.steam[[x,y,z]]){
+		if(generators.steam[[x,y,z]].coal > 0){
+			Level.dropItem(x,y,z,0,263,generators.steam[[x,y,z]].coal);
+		}
+		delete generators.steam[[x,y,z]];
+	}
+	
+	//Steam Stuffs
 	if(Player.getPointedBlockId() == 28 && machines.boilers[[x,y,z]]){
 		if(machines.boilers[[x,y,z]].coal > 0){
 			Level.dropItem(x,y,z,0,263,machines.boilers[[x,y,z]].coal);
@@ -177,6 +287,18 @@ function destroyBlock(x,y,z,side){
 }
 
 function modTick(){
+	for(blockPos in generators.coal){}
+	for(blockPos in generators.lava){}
+	for(blockPos in generators.solar){
+		var x = generators.solar[blockPos].x;
+		var y = generators.solar[blockPos].y;
+		var z = generators.solar[blockPos].z;
+		for(var i = 0; i<256-y; i++){
+			if(){}
+		}
+	}
+	for(blockPos in generators.steam){}
+	
 	for(blockPos in machines.boilers){
 		if(machines.boilers[blockPos].coal > 0 && machines.boilers[blockPos].timer == 0 && machines.boilers[blockPos].steam < boilerMaxSteam){
 			if(Level.getTile(machines.boilers[blockPos].x,machines.boilers[blockPos].y-1,machines.boilers[blockPos].z) == 8 || Level.getTile(machines.boilers[blockPos].x,machines.boilers[blockPos].y-1,machines.boilers[blockPos].z) == 9){
@@ -331,4 +453,22 @@ Data.saveMachines=function(){
 	var outWrite=new java.io.OutputStreamWriter(new java.io.FileOutputStream(data));
 	outWrite.append(JSON.stringify(machines)); outWrite.close();
 	machines={};
+}
+
+Data.loadGenerators=function(){
+	java.io.File(new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE")).mkdirs();
+	var data=new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE/Generators.txt");
+	if(!data.exists()) return false; data.createNewFile();
+	var fos=new java.io.FileInputStream(data);
+	var str=new java.lang.StringBuilder(); var ch;
+	while((ch=fos.read())!=-1) str.append(java.lang.Character(ch));
+	generators=JSON.parse(String(str.toString())); fos.close();
+}
+
+Data.saveGenerators=function(){
+	var data=new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE/Generators.txt");
+	if(data.exists()) data.delete(); data.createNewFile();
+	var outWrite=new java.io.OutputStreamWriter(new java.io.FileOutputStream(data));
+	outWrite.append(JSON.stringify(generators)); outWrite.close();
+	generators={};
 }

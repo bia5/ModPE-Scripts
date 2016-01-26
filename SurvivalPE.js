@@ -39,6 +39,7 @@ var generators = {
 	steam: {}
 }
 var version = "0.1.1";
+var tick = 0;
 var Data = {};
 var lastXYZ = [];
 var blockPos;
@@ -287,14 +288,23 @@ function destroyBlock(x,y,z,side){
 }
 
 function modTick(){
+	tick++;
 	for(blockPos in generators.coal){}
 	for(blockPos in generators.lava){}
 	for(blockPos in generators.solar){
-		var x = generators.solar[blockPos].x;
-		var y = generators.solar[blockPos].y;
-		var z = generators.solar[blockPos].z;
-		for(var i = 0; i<256-y; i++){
-			if(){}
+		for(var i = 0; i<256-generators.solar[blockPos].y; i++){
+			if(Level.getTile(generators.solar[blockPos].x,i,generators.solar[blockPos].z) != 0){
+				generators.solar[blockPos].isActive = false;
+			}
+		}
+		if(tick == 20){
+			if(generators.solar[blockPos].isActive && generators.solar[blockPos].energy < solarGenMaxEnergy){
+				generators.solar[blockPos].energy+=10;
+			}
+		}
+		if(generators.solar[blockPos].energy > 99 && isWire(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) && Level.getData(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) == 4){
+			generators.solar[blockPos].energy-=100;
+			sendEnergy(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z,generators.solar[blockPos].x,generators.solar[blockPos].y,generators.solar[blockPos].z,100);
 		}
 	}
 	for(blockPos in generators.steam){}
@@ -322,7 +332,8 @@ function modTick(){
 			if(machines.tanks[blockPos].steam < 100 && machines.tanks[blockPos].steam > 0){
 				sendSteam(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z,machines.tanks[blockPos].x,machines.tanks[blockPos].y,machines.tanks[blockPos].z,machines.tanks[blockPos].steam);
 				machines.tanks[blockPos].steam-=machines.tanks[blockPos].steam;
-			}if(machines.tanks[blockPos].steam > 99){
+			}
+			if(machines.tanks[blockPos].steam > 99 && isWire(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z) && Level.getData(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z) == 1){
 				machines.tanks[blockPos].steam-=100;
 				sendSteam(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z,machines.tanks[blockPos].x,machines.tanks[blockPos].y,machines.tanks[blockPos].z,100);
 			}
@@ -332,7 +343,8 @@ function modTick(){
 		if(machines.steamConverter[blockPos].steam > 99 && steamConverterMaxEnergy > (machines.steamConverter[blockPos].energy + 99)){
 			machines.steamConverter[blockPos].energy+=100;
 			machines.steamConverter[blockPos].steam-=100;
-		}if(machines.steamConverter[blockPos].energy > 99){
+		}
+		if(machines.steamConverter[blockPos].energy > 99 && isWire(machines.steamConverter[blockPos].x,machines.steamConverter[blockPos].y+1,machines.steamConverter[blockPos].z) && Level.getData(machines.steamConverter[blockPos].x,machines.steamConverter[blockPos].y+1,machines.steamConverter[blockPos].z) == 4){
 			machines.steamConverter[blockPos].energy-=100;
 			sendEnergy(machines.steamConverter[blockPos].x,machines.steamConverter[blockPos].y+1,machines.steamConverter[blockPos].z,machines.steamConverter[blockPos].x,machines.steamConverter[blockPos].y,machines.steamConverter[blockPos].z,100);
 		}

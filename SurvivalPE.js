@@ -1,4 +1,5 @@
 //Mod By CrazyWolfy23
+//Get Updates at http://crazywolfy23.github/io/minecraft/SurvivalPE/
 
 /*
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. 
@@ -11,31 +12,22 @@ TODO
 ===============
 -Textures
 -GUI
-*/
+-Auto Updater
 
-/*
-Updates
-===============
--v0.1.3
-  Added Coal Generator.
-  Added Lava Generator.
-  Added Steam Generator.
-  Reprogramed Multiblock Steam Generators.
-  Fixed Generators ids.
-  Tweaked Solar Generator.
-  Added Log
--v0.1.2
-  Added Solar Generator.
--v0.1.1
-  Added Some new Blocks.
-  Fixed Versions.
--v0.1.0
-  Added Steam Boiler.
-  Added Steam Tank.
-  Added Steam Converter.
-  Added Spin Wheel.
-  Added Steam Pipe and Steam Extraction Pipe.
-  Added Electric Pipe and Electric Extraction Pipe.
+-Rework Pipes
+
+-Battery Block
+-Solid Liquidfier
+-Chemical Infuser
+-Chemical Heat Chamber
+-Composter
+-Advanced Composter
+-Farmer
+-Advanced Farmer
+-BioGas Generator
+-Crusher
+-Electric Furnace
+-Compresser
 */
 
 var machines = {
@@ -51,10 +43,9 @@ var generators = {
 	solar: {},
 	steam: {}
 }
-var version = "0.1.3";
+var version = "0.1.4";
 var tick = 0;
 var Data = {};
-var lastXYZ = [];
 var blockPos;
 var wires = [188,189,190,191];
 var boilerMaxSteam = 500;
@@ -81,13 +72,13 @@ ModPE.setItem(503,"apple",0,"Electric Extraction Pipe");
 ModPE.setItem(504,"apple",0,"Blue Wrench");
 
 Block.defineBlock(33,"Boiler",["iron_block",0]);
-Block.setDestroyTime(28,0);
+Block.setDestroyTime(33,0);
 Block.defineBlock(34,"Steam Tank",["iron_block",0]);
 Block.setDestroyTime(29,0);
 Block.defineBlock(36,"Steam Converter",["iron_block",0]);
-Block.setDestroyTime(33,0);
+Block.setDestroyTime(36,0);
 Block.defineBlock(43,"Spin Wheel",["iron_block",0]);
-Block.setDestroyTime(34,0);
+Block.setDestroyTime(43,0);
 Block.defineBlock(54,"Coal Generator",["iron_block",0]);
 Block.setDestroyTime(54,0);
 Block.defineBlock(55,"Lava Generator",["iron_block",0]);
@@ -96,19 +87,16 @@ Block.defineBlock(69,"Solar Generator",["iron_block",0]);
 Block.setDestroyTime(69,0);
 Block.defineBlock(70,"Steam Generator",["iron_block",0]);
 Block.setDestroyTime(70,0);
-Block.defineBlock(191,"Pipe",["iron_block",0],7,false,0);
-Block.defineBlock(188,"Pipe",["iron_block",0],7,false,0);
-Block.defineBlock(189,"Pipe",["iron_block",0],7,false,0);
-Block.defineBlock(190,"Pipe",["iron_block",0],7,false,0);
-Block.setShape(191,-0.25,0.25,0.25,1.25,0.75,0.75);
-Block.setShape(188,0.25,0.25,0.25,0.75,0.75,0.75);
-Block.setShape(189,0.25,0.25,-0.25,0.75,0.75,1.25);
-Block.setShape(190,0.25,-0.25,0.25,0.75,1.25,0.75);
 for(var i=188;i<192;i++){
+	Block.defineBlock(i,"Pipe",["iron_block",0],7,false,0);
 	Block.setLightOpacity(i,0.0001);
 	Block.setDestroyTime(i,0.5);
 	Block.setRenderLayer(i,4);
 }
+Block.setShape(191,-0.25,0.25,0.25,1.25,0.75,0.75);
+Block.setShape(188,0.25,0.25,0.25,0.75,0.75,0.75);
+Block.setShape(189,0.25,0.25,-0.25,0.75,0.75,1.25);
+Block.setShape(190,0.25,-0.25,0.25,0.75,1.25,0.75);
 
 function newLevel(){
 	Data.loadMachines();
@@ -139,8 +127,6 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 				break;
 		}
 	}
-	
-	//Generator Stuffs
 	if(blockId == 54 && generators.coal[[x,y,z]]){
 		if(itemId == 263 && generators.coal[[x,y,z]].coal < coalGenMaxCoal){
 			generators.coal[[x,y,z]].coal++;
@@ -215,8 +201,6 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 			}
 		}
 	}
-	
-	//Steam Stuffs
 	if(blockId == 28 && machines.boiler[[x,y,z]]){
 		if(itemId == 263 && machines.boiler[[x,y,z]].coal < boilerMaxCoal){
 			machines.boiler[[x,y,z]].coal++;
@@ -272,8 +256,6 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 			}
 		}
 	}
-	
-	//Pipes
 	if(itemId == 500){
 		Entity.setCarriedItem(Player.getEntity(),500,Player.getCarriedItemCount()-1,0);
 		placePipe(blockPos[0],blockPos[1],blockPos[2],0);
@@ -330,8 +312,6 @@ function destroyBlock(x,y,z,side){
 
 function modTick(){
 	tick++;
-	
-	//Generators
 	for(blockPos in generators.coal){
 		if(generators.coal[blockPos].coal > 0 && generators.coal[blockPos].timer == 0 && generators.coal[blockPos].energy < coalGenMaxEnergy){
 			generators.coal[blockPos].coal--;
@@ -408,8 +388,6 @@ function modTick(){
 			sendEnergy(generators.steam[blockPos].x,generators.steam[blockPos].y+1,generators.steam[blockPos].z,generators.steam[blockPos].x,generators.steam[blockPos].y,generators.steam[blockPos].z,100);
 		}
 	}
-	
-	//MulitBlock Steam Generator
 	for(blockPos in machines.boiler){
 		if(machines.boiler[blockPos].coal > 0 && machines.boiler[blockPos].timer == 0 && machines.boiler[blockPos].steam < boilerMaxSteam && machines.boiler[blockPos].water > 999){
 			machines.boiler[blockPos].water-=1000;
@@ -469,10 +447,12 @@ function sendEnergy(x,y,z,xx,yy,zz,energy){
 		}
 		if(amt > 0){
 			var rnd = Math.floor(Math.random()*places.length);
-			if(isWire(places[rnd][0],places[rnd][1],places[rnd][2])){
+			if(isWire(places[rnd])){
 				sendEnergy(places[rnd][0],places[rnd][1],places[rnd][2],x,y,z,energy);
 			}
-			if(Level.getTile(places[rnd][0],places[rnd][1],places[rnd][2]) == 34 && (machines.spinWheel[[places[rnd][0],places[rnd][1],places[rnd][2]]].energy + energy) <= spinWheelMaxEnergy){}
+			if(Level.getTile(places[rnd]) == 34 && (machines.spinWheel[places[rnd]].energy + energy) <= spinWheelMaxEnergy){
+				machines.spinWheel[places[rnd]].energy+=energy;
+			}
 		}
 	}
 }

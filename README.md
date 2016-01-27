@@ -4,7 +4,7 @@ This is a collection of all my modpe scripts, import into blocklauncher to use. 
 Here is a list of mods and what they do:
 
 -SurvivalPE:
-	Look at the website (here)[http://crazywolfy23.github.io/minecraft/SurvivalPE/].
+	Look at the website [here](http://crazywolfy23.github.io/minecraft/SurvivalPE/).
 	
 -Atom:
 	This is another WIP Mod that makes a new programming laguage for mcpe editors, (Such as Modders and addonererererers).

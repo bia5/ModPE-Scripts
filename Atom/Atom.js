@@ -93,7 +93,7 @@ function fileChecker(){
 function log(string){
 	if(logFile.exists()){
 		var out = new java.io.PrintWriter(new java.io.FileWriter(logFile, true));
-		out.println("[Atom]"+string);
+		out.println("[Atom] "+string);
 		out.close();
 	}
 }

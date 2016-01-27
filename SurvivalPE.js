@@ -10,28 +10,37 @@ visit http://creativecommons.org/licenses/by-sa/4.0/.
 TODO
 ===============
 -Textures
--Generators
--Fix Generators Ids
--Rework multiblock steam generator
--Add Log
 -GUI
 */
 
 /*
 Updates
 ===============
+-v0.1.3
+  Added Coal Generator.
+  Added Lava Generator.
+  Added Steam Generator.
+  Reprogramed Multiblock Steam Generators.
+  Fixed Generators ids.
+  Tweaked Solar Generator.
+  Added Log
 -v0.1.2
-  Added Solar Generator, still have to add blockId.
+  Added Solar Generator.
 -v0.1.1
-  Adds a few more options to create your energy, like coal, lava, solar and steam generators.
-  Also fixed versions so we will be in alpha stages for awhile
+  Added Some new Blocks.
+  Fixed Versions.
 -v0.1.0
-  Added a basic Muliblock steam generator. Also includes spinwheel.
+  Added Steam Boiler.
+  Added Steam Tank.
+  Added Steam Converter.
+  Added Spin Wheel.
+  Added Steam Pipe and Steam Extraction Pipe.
+  Added Electric Pipe and Electric Extraction Pipe.
 */
 
 var machines = {
-	boilers:{},
-	tanks:{},
+	boiler:{},
+	tank:{},
 	steamConverter:{},
 	spinWheel:{}
 }
@@ -42,7 +51,7 @@ var generators = {
 	solar: {},
 	steam: {}
 }
-var version = "0.1.2";
+var version = "0.1.3";
 var tick = 0;
 var Data = {};
 var lastXYZ = [];
@@ -50,6 +59,7 @@ var blockPos;
 var wires = [188,189,190,191];
 var boilerMaxSteam = 500;
 var boilerMaxCoal = 16;
+var boilerMaxWater = 1000;
 var tankMaxSteam = 10000;
 var steamConverterMaxSteam = 500;
 var steamConverterMaxEnergy = 500;
@@ -65,28 +75,27 @@ var steamGenMaxCoal = 16;
 var steamGenMaxWater = 1000;
 
 ModPE.setItem(500,"apple",0,"Steam Pipe");
-ModPE.setItem(501,"apple",0,"Extraction Pipe (Steam)");
+ModPE.setItem(501,"apple",0,"Steam Extraction Pipe");
 ModPE.setItem(502,"apple",0,"Electric Pipe");
-ModPE.setItem(503,"apple",0,"Extraction Pipe (Electric)");
-ModPE.setItem(504,"apple",0,"Wrench (Blue)");
+ModPE.setItem(503,"apple",0,"Electric Extraction Pipe");
+ModPE.setItem(504,"apple",0,"Blue Wrench");
 
-Block.defineBlock(28,"Boiler",["iron_block",0]);
+Block.defineBlock(33,"Boiler",["iron_block",0]);
 Block.setDestroyTime(28,0);
-Block.defineBlock(29,"Steam Tank",["iron_block",0]);
+Block.defineBlock(34,"Steam Tank",["iron_block",0]);
 Block.setDestroyTime(29,0);
-Block.defineBlock(33,"Steam Converter",["iron_block",0]);
+Block.defineBlock(36,"Steam Converter",["iron_block",0]);
 Block.setDestroyTime(33,0);
-Block.defineBlock(34,"Spin Wheel",["iron_block",0]);
+Block.defineBlock(43,"Spin Wheel",["iron_block",0]);
 Block.setDestroyTime(34,0);
-//Update Item Ids
-Block.defineBlock(nil,"Coal Generator",["iron_block",0]);
-Block.setDestroyTime(nil,0);
-Block.defineBlock(nil,"Lava Generator",["iron_block",0]);
-Block.setDestroyTime(nil,0);
-Block.defineBlock(nil,"Solar Generator",["iron_block",0]);
-Block.setDestroyTime(nil,0);
-Block.defineBlock(nil,"Steam Generator",["iron_block",0]);
-Block.setDestroyTime(nil,0);
+Block.defineBlock(54,"Coal Generator",["iron_block",0]);
+Block.setDestroyTime(54,0);
+Block.defineBlock(55,"Lava Generator",["iron_block",0]);
+Block.setDestroyTime(55,0);
+Block.defineBlock(69,"Solar Generator",["iron_block",0]);
+Block.setDestroyTime(69,0);
+Block.defineBlock(70,"Steam Generator",["iron_block",0]);
+Block.setDestroyTime(70,0);
 Block.defineBlock(191,"Pipe",["iron_block",0],7,false,0);
 Block.defineBlock(188,"Pipe",["iron_block",0],7,false,0);
 Block.defineBlock(189,"Pipe",["iron_block",0],7,false,0);
@@ -131,8 +140,14 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 		}
 	}
 	
-	//Generator Stuffs ITEMIDS!
-	if(itemId == nil){
+	//Generator Stuffs
+	if(blockId == 54 && generators.coal[[x,y,z]]){
+		if(itemId == 263 && generators.coal[[x,y,z]].coal < coalGenMaxCoal){
+			generators.coal[[x,y,z]].coal++;
+			Entity.setCarriedItem(Player.getEntity(), 263, Player.getCarriedItemCount()-1,0);
+		}
+	}
+	if(itemId == 54){
 		if(!generators.coal[blockPos]){
 			generators.coal[blockPos] = {
 				x:blockPos[0],
@@ -144,7 +159,14 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 			}
 		}
 	}
-	if(itemId == nil){
+	if(blockId == 55 && generators.lava[[x,y,z]]){
+		if(itemId == 337 && (generators.lava[[x,y,z]].lava + 999) < lavaGenMaxLava){
+			generators.lava[[x,y,z]].lava+=1000;
+			Entity.setCarriedItem(Player.getEntity(), 337, Player.getCarriedItemCount()-1,0);
+			Player.addItemInventory(333,1,0);
+		}
+	}
+	if(itemId == 55){
 		if(!generators.lava[blockPos]){
 			generators.lava[blockPos] = {
 				x:blockPos[0],
@@ -156,7 +178,7 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 			}
 		}
 	}
-	if(itemId == nil){
+	if(itemId == 69){
 		if(!generators.solar[blockPos]){
 			generators.solar[blockPos] = {
 				x:blockPos[0],
@@ -167,7 +189,18 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 			}
 		}
 	}
-	if(itemId == nil){
+	if(blockId == 28 && generators.steam[[x,y,z]]){
+		if(itemId == 263 && generators.steam[[x,y,z]].coal < steamGenMaxCoal){
+			generators.steam[[x,y,z]].coal++;
+			Entity.setCarriedItem(Player.getEntity(), 263, Player.getCarriedItemCount()-1,0);
+		}
+		if(itemId == 336 && (generators.steam[[x,y,z]].water + 999) < steamGenMaxWater){
+			generators.steam[[x,y,z]].water+=1000;
+			Entity.setCarriedItem(Player.getEntity(), 336, Player.getCarriedItemCount()-1,0);
+			Player.addItemInventory(333,1,0);
+		}
+	}
+	if(itemId == 70){
 		if(!generators.steam[blockPos]){
 			generators.steam[blockPos] = {
 				x:blockPos[0],
@@ -177,24 +210,31 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 				steam:0,
 				water:0,
 				coal:0,
-				timer:0
+				sTimer:0,
+				eTimer:0
 			}
 		}
 	}
 	
 	//Steam Stuffs
-	if(blockId == 28 && machines.boilers[[x,y,z]]){
-		if(itemId == 263 && machines.boilers[[x,y,z]].coal < boilerMaxCoal){
-			machines.boilers[[x,y,z]].coal++;
+	if(blockId == 28 && machines.boiler[[x,y,z]]){
+		if(itemId == 263 && machines.boiler[[x,y,z]].coal < boilerMaxCoal){
+			machines.boiler[[x,y,z]].coal++;
 			Entity.setCarriedItem(Player.getEntity(), 263, Player.getCarriedItemCount()-1,0);
+		}
+		if(itemId == 336 && (machines.boiler[[x,y,z]].water + 1000) < boilerMaxWater){
+			machines.boiler[[x,y,z]].water+=1000;
+			Entity.setCarriedItem(Player.getEntity(), 336, Player.getCarriedItemCount()-1,0);
+			Player.addItemInventory(333,1,0);
 		}
 	}
 	if(itemId == 28){
-		if(!machines.boilers[blockPos]){
-			machines.boilers[blockPos] = {
+		if(!machines.boiler[blockPos]){
+			machines.boiler[blockPos] = {
 				x:blockPos[0],
 				y:blockPos[1],
 				z:blockPos[2],
+				water:0,
 				steam:0,
 				timer:0,
 				coal:0
@@ -202,8 +242,8 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 		}
 	}
 	if(itemId == 29){
-		if(!machines.tanks[blockPos]){
-			machines.tanks[blockPos] = {
+		if(!machines.tank[blockPos]){
+			machines.tank[blockPos] = {
 				x:blockPos[0],
 				y:blockPos[1],
 				z:blockPos[2],
@@ -253,35 +293,32 @@ function useItem(x,y,z,itemId,blockId,side,itemD,blockD){
 }
 
 function destroyBlock(x,y,z,side){
-	//Generators ITEMIDS!
-	if(Player.getPointedBlockId() == nil && generators.coal[[x,y,z]]){
+	if(Player.getPointedBlockId() == 54 && generators.coal[[x,y,z]]){
 		if(generators.coal[[x,y,z]].coal > 0){
 			Level.dropItem(x,y,z,0,263,generators.coal[[x,y,z]].coal);
 		}
 		delete generators.coal[[x,y,z]];
 	}
-	if(Player.getPointedBlockId() == nil && generators.lava[[x,y,z]]){
+	if(Player.getPointedBlockId() == 55 && generators.lava[[x,y,z]]){
 		delete generators.lava[[x,y,z]];
 	}
-	if(Player.getPointedBlockId() == nil && generators.solar[[x,y,z]]){
+	if(Player.getPointedBlockId() == 69 && generators.solar[[x,y,z]]){
 		delete generators.solar[[x,y,z]];
 	}
-	if(Player.getPointedBlockId() == nil && generators.steam[[x,y,z]]){
+	if(Player.getPointedBlockId() == 70 && generators.steam[[x,y,z]]){
 		if(generators.steam[[x,y,z]].coal > 0){
 			Level.dropItem(x,y,z,0,263,generators.steam[[x,y,z]].coal);
 		}
 		delete generators.steam[[x,y,z]];
 	}
-	
-	//Steam Stuffs
-	if(Player.getPointedBlockId() == 28 && machines.boilers[[x,y,z]]){
-		if(machines.boilers[[x,y,z]].coal > 0){
-			Level.dropItem(x,y,z,0,263,machines.boilers[[x,y,z]].coal);
+	if(Player.getPointedBlockId() == 28 && machines.boiler[[x,y,z]]){
+		if(machines.boiler[[x,y,z]].coal > 0){
+			Level.dropItem(x,y,z,0,263,machines.boiler[[x,y,z]].coal);
 		}
-		delete machines.boilers[[x,y,z]];
+		delete machines.boiler[[x,y,z]];
 	}
-	if(Player.getPointedBlockId() == 29 && machines.tanks[[x,y,z]]){
-		delete machines.tanks[[x,y,z]];
+	if(Player.getPointedBlockId() == 29 && machines.tank[[x,y,z]]){
+		delete machines.tank[[x,y,z]];
 	}
 	if(Player.getPointedBlockId() == 33 && machines.steamConverter[[x,y,z]]){
 		delete machines.steamConverter[[x,y,z]];
@@ -293,61 +330,119 @@ function destroyBlock(x,y,z,side){
 
 function modTick(){
 	tick++;
-	for(blockPos in generators.coal){}
-	for(blockPos in generators.lava){}
-	for(blockPos in generators.solar){
-		for(var i = 0; i<256-generators.solar[blockPos].y; i++){
-			if(Level.getTile(generators.solar[blockPos].x,i,generators.solar[blockPos].z) != 0){
-				generators.solar[blockPos].isActive = false;
+	
+	//Generators
+	for(blockPos in generators.coal){
+		if(generators.coal[blockPos].coal > 0 && generators.coal[blockPos].timer == 0 && generators.coal[blockPos].energy < coalGenMaxEnergy){
+			generators.coal[blockPos].coal--;
+			generators.coal[blockPos].timer+=100;
+		}
+		if(generators.coal[blockPos].timer > 0){
+			generators.coal[blockPos].timer--;
+			if(generators.coal[blockPos].energy < coalGenMaxEnergy){
+				generators.coal[blockPos].energy++;
 			}
 		}
+		if(generators.coal[blockPos].energy > 99 && isWire(generators.coal[blockPos].x,generators.coal[blockPos].y+1,generators.coal[blockPos].z) && Level.getData(generators.coal[blockPos].x,generators.coal[blockPos].y+1,generators.coal[blockPos].z) == 4){
+			generators.coal[blockPos].energy-=100;
+			sendEnergy(generators.coal[blockPos].x,generators.coal[blockPos].y+1,generators.coal[blockPos].z,generators.coal[blockPos].x,generators.coal[blockPos].y,generators.coal[blockPos].z,100);
+		}
+	}
+	for(blockPos in generators.lava){
+		if(generators.lava[blockPos].lava > 999 && generators.lava[blockPos].timer == 0 && generators.lava[blockPos].energy < lavaGenMaxEnergy){
+			generators.lava[blockPos].lava-=1000;
+			generators.lava[blockPos].timer+=100;
+		}
+		if(generators.lava[blockPos].timer > 0){
+			generators.lava[blockPos].timer--;
+			if((generators.lava[blockPos].energy+2) < lavaGenMaxEnergy){
+				generators.lava[blockPos].energy+=3;
+			}
+		}
+		if(generators.lava[blockPos].energy > 99 && isWire(generators.lava[blockPos].x,generators.lava[blockPos].y+1,generators.lava[blockPos].z) && Level.getData(generators.lava[blockPos].x,generators.lava[blockPos].y+1,generators.lava[blockPos].z) == 4){
+			generators.lava[blockPos].energy-=100;
+			sendEnergy(generators.lava[blockPos].x,generators.lava[blockPos].y+1,generators.lava[blockPos].z,generators.lava[blockPos].x,generators.lava[blockPos].y,generators.lava[blockPos].z,100);
+		}
+	}
+	for(blockPos in generators.solar){
 		if(tick == 20){
+			for(var i = 0; i<256-generators.solar[blockPos].y; i++){
+				if(Level.getTile(generators.solar[blockPos].x,i,generators.solar[blockPos].z) != 0){
+					generators.solar[blockPos].isActive = false;
+				}
+			}
 			if(generators.solar[blockPos].isActive && generators.solar[blockPos].energy < solarGenMaxEnergy){
 				generators.solar[blockPos].energy+=10;
 			}
 		}
-		if(generators.solar[blockPos].energy > 99 && isWire(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) && Level.getData(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) == 4
-		){
+		if(generators.solar[blockPos].energy > 99 && isWire(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) && Level.getData(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z) == 4){
 			generators.solar[blockPos].energy-=100;
 			sendEnergy(generators.solar[blockPos].x,generators.solar[blockPos].y+1,generators.solar[blockPos].z,generators.solar[blockPos].x,generators.solar[blockPos].y,generators.solar[blockPos].z,100);
 		}
 	}
-	for(blockPos in generators.steam){}
-	
-	for(blockPos in machines.boilers){
-		if(machines.boilers[blockPos].coal > 0 && machines.boilers[blockPos].timer == 0 && machines.boilers[blockPos].steam < boilerMaxSteam){
-			if(Level.getTile(machines.boilers[blockPos].x,machines.boilers[blockPos].y-1,machines.boilers[blockPos].z) == 8 || Level.getTile(machines.boilers[blockPos].x,machines.boilers[blockPos].y-1,machines.boilers[blockPos].z) == 9){
-				machines.boilers[blockPos].coal--;
-				machines.boilers[blockPos].timer+=200;
+	for(blockPos in generators.steam){
+		if(generators.steam[blockPos].coal > 0 && generators.steam[blockPos].sTimer == 0 && generators.steam[blockPos].steam < steamGenMaxSteam && generators.steam[blockPos].water > 999){
+			machines.steam[blockPos].water-=1000;
+			machines.steam[blockPos].coal--;
+			machines.steam[blockPos].sTimer+=100;
+		}
+		if(generators.steam[blockPos].sTimer > 0){
+			generators.steam[blockPos].sTimer--;
+			if(generators.steam[blockPos].steam < steamGenMaxSteam){
+				generators.steam[blockPos].steam++;
 			}
 		}
-		if(machines.boilers[blockPos].timer > 0){
-			machines.boilers[blockPos].timer--;
-			if(machines.boilers[blockPos].steam < boilerMaxSteam){
-				machines.boilers[blockPos].steam++;
+		if(generators.steam[blockPos].eTimer == 0 && generators.steam[blockPos].steam > 99 && generators.steam[blockPos].energy < steamConverterMaxEnergy){
+			generators.steam[blockPos].steam-=100;
+			generators.steam[blockPos].eTimer+=50
+		}
+		
+		if(generators.steam[blockPos].eTimer > 0){
+			generators.steam[blockPos].eTimer--;
+			if(generators.steam[blockPos].energy < steamGenMaxEnergy){
+				generators.steam[blockPos].energy++;
 			}
 		}
-		if(machines.boilers[blockPos].steam > 99 && isWire(machines.boilers[blockPos].x,machines.boilers[blockPos].y+1,machines.boilers[blockPos].z) && Level.getData(machines.boilers[blockPos].x,machines.boilers[blockPos].y+1,machines.boilers[blockPos].z) == 1){
-			machines.boilers[blockPos].steam-=100;
-			sendSteam(machines.boilers[blockPos].x,machines.boilers[blockPos].y+1,machines.boilers[blockPos].z,machines.boilers[blockPos].x,machines.boilers[blockPos].y,machines.boilers[blockPos].z,100);
+		if(generators.steam[blockPos].energy > 99 && isWire(generators.steam[blockPos].x,generators.steam[blockPos].y+1,generators.steam[blockPos].z) && Level.getData(generators.steam[blockPos].x,generators.steam[blockPos].y+1,generators.steam[blockPos].z) == 4){
+			generators.steam[blockPos].energy-=100;
+			sendEnergy(generators.steam[blockPos].x,generators.steam[blockPos].y+1,generators.steam[blockPos].z,generators.steam[blockPos].x,generators.steam[blockPos].y,generators.steam[blockPos].z,100);
 		}
 	}
-	for(blockPos in machines.tanks){
-		if(isWire(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z) && Level.getData(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z) == 1){
-			if(machines.tanks[blockPos].steam < 100 && machines.tanks[blockPos].steam > 0){
-				sendSteam(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z,machines.tanks[blockPos].x,machines.tanks[blockPos].y,machines.tanks[blockPos].z,machines.tanks[blockPos].steam);
-				machines.tanks[blockPos].steam-=machines.tanks[blockPos].steam;
+	
+	//MulitBlock Steam Generator
+	for(blockPos in machines.boiler){
+		if(machines.boiler[blockPos].coal > 0 && machines.boiler[blockPos].timer == 0 && machines.boiler[blockPos].steam < boilerMaxSteam && machines.boiler[blockPos].water > 999){
+			machines.boiler[blockPos].water-=1000;
+			machines.boiler[blockPos].coal--;
+			machines.boiler[blockPos].timer+=100;
+		}
+		if(machines.boiler[blockPos].timer > 0){
+			machines.boiler[blockPos].timer--;
+			if(machines.boiler[blockPos].steam < boilerMaxSteam){
+				machines.boiler[blockPos].steam++;
 			}
-			if(machines.tanks[blockPos].steam > 99 && isWire(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z) && Level.getData(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z) == 1){
-				machines.tanks[blockPos].steam-=100;
-				sendSteam(machines.tanks[blockPos].x,machines.tanks[blockPos].y+1,machines.tanks[blockPos].z,machines.tanks[blockPos].x,machines.tanks[blockPos].y,machines.tanks[blockPos].z,100);
-			}
+		}
+		if(machines.boiler[blockPos].steam > 99 && isWire(machines.boiler[blockPos].x,machines.boiler[blockPos].y+1,machines.boiler[blockPos].z) && Level.getData(machines.boiler[blockPos].x,machines.boiler[blockPos].y+1,machines.boiler[blockPos].z) == 1){
+			machines.boiler[blockPos].steam-=100;
+			sendSteam(machines.boiler[blockPos].x,machines.boiler[blockPos].y+1,machines.boiler[blockPos].z,machines.boiler[blockPos].x,machines.boiler[blockPos].y,machines.boiler[blockPos].z,100);
+		}
+	}
+	for(blockPos in machines.tank){
+		if(machines.tank[blockPos].steam > 99 && isWire(machines.tank[blockPos].x,machines.tank[blockPos].y+1,machines.tank[blockPos].z) && Level.getData(machines.tank[blockPos].x,machines.tank[blockPos].y+1,machines.tank[blockPos].z) == 1){
+			machines.tank[blockPos].steam-=100;
+			sendSteam(machines.tank[blockPos].x,machines.tank[blockPos].y+1,machines.tank[blockPos].z,machines.tank[blockPos].x,machines.tank[blockPos].y,machines.tank[blockPos].z,100);
 		}
 	}
 	for(blockPos in machines.steamConverter){
 		if(machines.steamConverter[blockPos].steam > 99 && steamConverterMaxEnergy > (machines.steamConverter[blockPos].energy + 99)){
-			machines.steamConverter[blockPos].energy+=100;
 			machines.steamConverter[blockPos].steam-=100;
+			machines.steamConverter[blockPos].timer+=50;
+		}
+		if(machines.steamConverter[blockPos].timer > 0){
+			machines.steamConverter[blockPos].timer--;
+			if(machines.steamConverter[blockPos].energy < steamConverterMaxEnergy){
+				machines.steamConverter[blockPos].energy++;
+			}
 		}
 		if(machines.steamConverter[blockPos].energy > 99 && isWire(machines.steamConverter[blockPos].x,machines.steamConverter[blockPos].y+1,machines.steamConverter[blockPos].z) && Level.getData(machines.steamConverter[blockPos].x,machines.steamConverter[blockPos].y+1,machines.steamConverter[blockPos].z) == 4){
 			machines.steamConverter[blockPos].energy-=100;
@@ -403,8 +498,8 @@ function sendSteam(x,y,z,xx,yy,zz,steam){
 			if(isWire(places[rnd][0],places[rnd][1],places[rnd][2])){
 				sendSteam(places[rnd][0],places[rnd][1],places[rnd][2],x,y,z,steam);
 			}
-			if(Level.getTile(places[rnd][0],places[rnd][1],places[rnd][2]) == 29 && (machines.tanks[[places[rnd][0],places[rnd][1],places[rnd][2]]].steam + steam) <= tankMaxSteam){
-				machines.tanks[[places[rnd][0],places[rnd][1],places[rnd][2]]].steam+=steam;
+			if(Level.getTile(places[rnd][0],places[rnd][1],places[rnd][2]) == 29 && (machines.tank[[places[rnd][0],places[rnd][1],places[rnd][2]]].steam + steam) <= tankMaxSteam){
+				machines.tank[[places[rnd][0],places[rnd][1],places[rnd][2]]].steam+=steam;
 			}
 			if(Level.getTile(places[rnd][0],places[rnd][1],places[rnd][2]) == 34 && (machines.steamConverter[[places[rnd][0],places[rnd][1],places[rnd][2]]].steam + steam) <= steamConverterMaxSteam){
 				machines.steamConverter[[places[rnd][0],places[rnd][1],places[rnd][2]]].steam+=steam;
@@ -452,6 +547,17 @@ function getTrueXYZ(x,y,z,side){
 	else if(side == 4){x = x - 1;}
 	else if(side == 5){x = x + 1;}
 	return [x,y,z];
+}
+
+function log(string){
+	java.io.File(new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE")).mkdirs();
+	var logFile = new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE/log.txt");
+	if(!logFile.exists()) java.io.File(new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE/log.txt")).createNewFile();
+	if(logFile.exists()){
+		var out = new java.io.PrintWriter(new java.io.FileWriter(logFile, true));
+		out.println("[SurvivalPE] "+string);
+		out.close();
+	}
 }
 
 Data.loadMachines=function(){

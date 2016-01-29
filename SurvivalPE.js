@@ -16,18 +16,9 @@ TODO
 
 -Rework Pipes
 
--Battery Block
--Solid Liquidfier
--Chemical Infuser
--Chemical Heat Chamber
 -Composter
--Advanced Composter
 -Farmer
--Advanced Farmer
--BioGas Generator
--Crusher
 -Electric Furnace
--Compresser
 */
 
 var machines = {
@@ -43,7 +34,7 @@ var generators = {
 	solar: {},
 	steam: {}
 }
-var version = "0.1.4";
+var version = "0.1.6";
 var tick = 0;
 var Data = {};
 var blockPos;
@@ -102,6 +93,7 @@ function newLevel(){
 	Data.loadMachines();
 	Data.loadGenerators();
 	clientMessage("SurvivalPE is made by CrazyWolfy23");
+	log("Loading SurvivalPE v"+version):
 }
 
 function leaveGame(){

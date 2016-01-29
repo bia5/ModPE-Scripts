@@ -7,20 +7,7 @@ visit http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
 var version = "0.1.0";
-var stage = stage_02;
-var stage_01 = "RUNNING";
-var stage_02 = "READY";
-var stage_03 = "PAUSED";
-var stage_04 = "LOADING ATOM v"+version;
-var stage_05 = "LOADING MODS";
-var stage_06 = "LOADING PROPERTIES";
-var stage_07 = "READING PROPERTIES";
-var stage_08 = "LOADING PREINIT";
-var stage_09 = "READING PREINIT";
-var stage_10 = "LOADING INIT";
-var stage_11 = "READING INIT";
-var stage_12 = "lOADING POSTINIT";
-var stage_13 = "READING POSTINIT";
+var hasLoaded = false;
 var modFolders = [];
 var mods = [];
 var atomFolder = file(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftpe/Atom/");
@@ -45,7 +32,9 @@ function loadMods(){
 	preInit();
 	init();
 	postInit();
+	hasLoaded = true;
 	log("Finished Loading Mods");
+	log("Running all "+mods.length+" mods.");
 }
 function loadProperties(){
 	for(var i = 0; i<modFolders.length; i++){
@@ -70,13 +59,17 @@ function readProperties(){
 	for(var i = 0; i<mods.length; i++){
 		var propString = mods[i].propertyString.toString().split("/n");
 		for(var j = 0; j<propString.length; j++){
-			
+			mods[i].variables = {
+				id:propString[0],
+				name:propString[1],
+				mainFilePath:propString[2],
+				version:propString[3],
+				description:propString[4],
+				authors:propString[5]
+			}
 		}
 	}
 }
-function readPreInit(){}
-function readInit(){}
-function readPostInit(){}
 
 function fileChecker(){
 	if(!atomFolder.exists()){

@@ -9,7 +9,7 @@ visit http://creativecommons.org/licenses/by-sa/4.0/.
 //Variables
 var mod = "CrazyWolf23sFoodMod";
 var modMsg = "<"+mod+"> ";
-var version = "v0.1"
+var version = "v0.1.0"
 
 var ctx = com.mojang.minecraftpe.MainActivity.currentMainActivity.get();
 var display = new android.util.DisplayMetrics();

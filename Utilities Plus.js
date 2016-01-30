@@ -6,6 +6,8 @@ To view a copy of this license,
 visit http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
+var version = "1.0";
+
 //Just to load my functions
 function destroyBlock(x,y,z,side){
 	treeChopper.run(x,y,z);

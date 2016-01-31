@@ -99,7 +99,7 @@ function newLevel(){
 	Data.loadMachines();
 	Data.loadGenerators();
 	clientMessage("SurvivalPE is made by CrazyWolfy23");
-	log("Loading SurvivalPE v"+version):
+	log("Loading SurvivalPE v"+version);
 }
 
 function leaveGame(){

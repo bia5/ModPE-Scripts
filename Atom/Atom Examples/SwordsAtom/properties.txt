@@ -1,0 +1,6 @@
+net.crazywolfy23.swordsaddon
+Swords Addon
+SwordsAtom
+1.0
+This addon add swords using the atom mod api, which is made proudly by CrazyWolfy23.
+CrazyWolfy23

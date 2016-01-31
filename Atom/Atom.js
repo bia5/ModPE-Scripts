@@ -22,16 +22,15 @@ function  newLevel(){
 function leaveGame(){
 	log("Goodbye");
 }
-function modTick(){}
+function modTick(){
+	if(hasLoaded == true){}
+}
 
 function loadMods(){
 	log("Loading Atom v"+version);
 	modFolders = modsFolder.listFiles();
 	loadProperties();
 	readProperties();
-	preInit();
-	init();
-	postInit();
 	hasLoaded = true;
 	log("Finished Loading Mods");
 	log("Running all "+mods.length+" mods.");
@@ -40,34 +39,33 @@ function loadProperties(){
 	for(var i = 0; i<modFolders.length; i++){
 		var prop = file(modFolders[i].toString()+"/properties.txt");
 		if(prop.exists()){
-			var fos = new java.io.FileInputStream(data);
+			var fos = new java.io.FileInputStream(prop);
 			var str = new java.lang.StringBuilder(); 
 			var ch;
 			while((ch=fos.read())!=-1) str.append(java.lang.Character(ch));
-			mods[mods.length].propertyString = String(str.toString());
+			mods[mods.length] = {
+				propertyString:str.toString()
+			}
 			fos.close();
 		}else{
 			delete modFolders[i];
 		}
 	}
 }
-function preInit(){}
-function init(){}
-function postInit(){}
 
 function readProperties(){
 	for(var i = 0; i<mods.length; i++){
-		var propString = mods[i].propertyString.toString().split("/n");
-		for(var j = 0; j<propString.length; j++){
-			mods[i].variables = {
-				id:propString[0],
-				name:propString[1],
-				mainFilePath:propString[2],
-				version:propString[3],
-				description:propString[4],
-				authors:propString[5]
-			}
+		var propString = mods[i].propertyString.toString().split("\n");
+		mods[i].variables = {
+			id:propString[0],
+			name:propString[1],
+			mainFilePath:propString[2],
+			version:propString[3],
+			description:propString[4],
+			authors:propString[5]
 		}
+		log("Mods: "+mods[i].propertyString.toString());
+		log("Id: "+mods[i].variables.id.toString());
 	}
 }
 

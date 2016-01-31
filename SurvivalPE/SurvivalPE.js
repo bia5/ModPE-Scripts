@@ -10,15 +10,18 @@ visit http://creativecommons.org/licenses/by-sa/4.0/.
 /*
 TODO
 ===============
--Textures
--GUI
--Auto Updater
-
+-Rewrite Mod
 -Rework Pipes
+-GUI
+*/
 
--Composter
--Farmer
--Electric Furnace
+/*
+Latest Update
+================
+-Fixed Tank Destroy Time.
+-Resized Tank.
+-Renamed Steam Tank to tank.
+-Made TexturePack, will install into mod after rewrite.
 */
 
 var machines = {
@@ -34,7 +37,7 @@ var generators = {
 	solar: {},
 	steam: {}
 }
-var version = "0.1.6";
+var version = "0.1.7";
 var tick = 0;
 var Data = {};
 var blockPos;
@@ -56,16 +59,19 @@ var steamGenMaxSteam = 500;
 var steamGenMaxCoal = 16;
 var steamGenMaxWater = 1000;
 
-ModPE.setItem(500,"apple",0,"Steam Pipe");
-ModPE.setItem(501,"apple",0,"Steam Extraction Pipe");
-ModPE.setItem(502,"apple",0,"Electric Pipe");
-ModPE.setItem(503,"apple",0,"Electric Extraction Pipe");
-ModPE.setItem(504,"apple",0,"Blue Wrench");
+ModPE.setItem(500,"pipe_steam",0,"Steam Pipe");
+ModPE.setItem(501,"pipe_steam_extraction",0,"Steam Extraction Pipe");
+ModPE.setItem(502,"pipe_energy",0,"Electric Pipe");
+ModPE.setItem(503,"pipe_energy_extraction",0,"Electric Extraction Pipe");
+ModPE.setItem(504,"wrench_red",0,"Blue Wrench");
 
 Block.defineBlock(33,"Boiler",["iron_block",0]);
 Block.setDestroyTime(33,0);
-Block.defineBlock(34,"Steam Tank",["iron_block",0]);
-Block.setDestroyTime(29,0);
+Block.defineBlock(34,"Tank",["iron_block",0]);
+Block.setShape(34,0.2,0,0.2,0.8,1,0.8);
+Block.setRenderLayer(34,4);
+Block.setLightOpacity(34,0.0001);
+Block.setDestroyTime(34,0);
 Block.defineBlock(36,"Steam Converter",["iron_block",0]);
 Block.setDestroyTime(36,0);
 Block.defineBlock(43,"Spin Wheel",["iron_block",0]);

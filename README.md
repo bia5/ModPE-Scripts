@@ -29,7 +29,7 @@ Here is a list of mods and what they do:
 	
 	-Redstone Energy (RE):
 		This api makes mods energy compatible with other mods energys.
-		Please look at the website [here]() to find out more.
+		Please look at the website [here](http://crazywolfy23.github.io/minecraft/RedstoneEnergyAPI/) to find out more.
 	
 	-ModPE: Custom Edition (ModPE: CE):
 		This api adds several new functions available to ModPE modders.

@@ -6,7 +6,8 @@ To view a copy of this license,
 visit http://creativecommons.org/licenses/by-sa/4.0/.
 */
 
-var version = "0.1.0";
+var version = "0.1.1";
+var mc-version = "0.13.1";
 var hasLoaded = false;
 var modFolders = [];
 var mods = [];
@@ -59,8 +60,7 @@ function loadMods(){
 	modFolders = modsFolder.listFiles();
 	loadProperties();
 	readProperties();
-	loadMainFile();
-	readMainFile();
+	runMainFiles();
 	hasLoaded = true;
 	log("Finished Loading Mods");
 	log("Running all "+mods.length+" mods.");
@@ -100,8 +100,9 @@ function readProperties(){
 			name:propString[1],
 			mainFilePath:propString[2],
 			version:propString[3],
-			description:propString[4],
-			authors:propString[5]
+			mcversion:propString[4],
+			description:propString[5],
+			authors:propString[6]
 		}
 		delete mods[i].propertyString;
 		log("Finished Reading "+i+"/"+mods.length+".");
@@ -109,39 +110,72 @@ function readProperties(){
 	log("Finished Reading Properties.");
 }
 
-function loadMainFile(){
-	log("Loading Main Files.");
+function runMainFiles(){
+	log("Running Main Files.");
 	for(var i = 0; i<mods.length; i++){
-		log("Loading "+i+"/"+mods.length+".");
-		var mainFile = file(mods[i].variables.mainFilePath.toString());
-		if(mainFile.exists()){
-			var fos = new java.io.FileInputStream(mainFile);
-			var str = new java.lang.StringBuilder(); 
-			var ch;
-			while((ch=fos.read())!=-1) str.append(java.lang.Character(ch));
-			mods[i] = {
-				mainFileString:str.toString()
-			}
-			fos.close();
-			log("Finished Loading "+i+"/"+mods.length+".");
-		}else{
-			log(i+" isn't a file!");
-			delete mods[i];
-		}
+		readAtomFile(mods[i].variables.mainFilePath);
 	}
-	log("Finished Loading Main Files.");
+	log("Finished Running Main Files.");
 }
 
-//This Is Atoms Brain
-function readMainFile(){
-	log("Reading Main Files.");
-	atom.setItem(256,dahra,Test,apple,0,"Atom");
-	log("Finished Reading Main Files.");
+function readAtomFile(string){
+	log("Reading Atom File.");
+	var atomFile = file(string);
+		var fos=new java.io.FileInputStream(atomFile);
+		var str=new java.lang.StringBuilder();
+		var ch;
+		while((ch=fos.read())!=-1) str.append(java.lang.Character(ch));
+		fos.close();
+		var s_1 = str.split("\n");
+		for(var i = 0; i<s_1.length; i++){
+			readFunctionLine(s_1[i]);
+		}
+	log("Finished Reading Atom File.");
+}
+
+function readFunctionLine(string){
+	log("Reading Function Line.");
+	var s_1 = string.split(":");
+	var s_2 = s_1[0].split(".");
+	var s_3 = s_1[1].split(",");
+	if(s_2[0] == ("atom")){
+		if(s_2[1] == ("setItem")){
+			var v_1 = parseInt(s_3[0]);
+			var v_2 = s_3[1];
+			var v_3 = s_3[2];
+			var v_4 = s_3[3];
+			var v_5 = parseInt(s_3[4]);
+			var v_6 = s_3[5].replace(";","");
+			atom.setItem(v_1,v_2,v_3,v_4,v_5);
+		}
+	}
+	else if(s_2[0] == "fileManager"){
+		if(s_2[1] == "makeNewFile"){
+			var v_1 = s_3[0];
+			fileManager.makeNewFile(v_1);
+		}
+		if(s_2[1] == "makeNewDir"){
+			var v_1 = s_3[0];
+			fileManager.makeNewDir(v_1);
+		}
+	}
+	log("Finished Reading Function Line.");
 }
 
 //Atoms Functions
-atom.setItem = function(itemId,id,name,tex,texDat,modId){
-	log("Created Item: itemId: "+itemId+", id: "+id+", ModId: "+modId+".");
+atom.setItem = function(itemId,id,name,tex,texDat){
 	ModPE.setItem(itemId,tex,texDat,name);
 	Player.addItemCreativeInv(itemId, 0, 1);
+}
+fileManager.makeNewFile(string){
+	var f_1 = file(string);
+	if(!f_1.exists()){
+		f_1.createNewFile();
+	}
+}
+fileManager.makeNewDir(string){
+	var f_1 = file(string);
+	if(!f_1.exists()){
+		f_1.mkdirs;
+	}
 }

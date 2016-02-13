@@ -23,17 +23,9 @@ Here is a list of mods and what they do:
 	This mod makes minecraft: pocket edition easier.
 	Please look at the website [here]() to find out more.
 	
--API's:
-	This adds new thing for mcpe modders.
-	Please look at the website [here]() to find out more.
-	
-	-Redstone Energy (RE):
-		This api makes mods energy compatible with other mods energys.
-		Please look at the website [here](http://crazywolfy23.github.io/minecraft/RedstoneEnergyAPI/) to find out more.
-	
-	-ModPE: Custom Edition (ModPE: CE):
-		This api adds several new functions available to ModPE modders.
-		Please look at the website [here]() to find out more.
+-Redstone Energy (RE):
+	This api makes mods energy compatible with other mods energys.
+	Please look at the website [here](http://crazywolfy23.github.io/minecraft/RedstoneEnergyAPI/) to find out more.
 
 !WARNING!
   The mods above may or maynot of been tested, so if you find a bug please report it by creating a new issue.

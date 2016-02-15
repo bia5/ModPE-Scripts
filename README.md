@@ -12,11 +12,6 @@ Here is a list of mods and what they do:
 	Minecraft: PE Version: 0.13.1
 	This is another WIP Mod that makes a new programming laguage for mcpe editors.
 	Please look at the website [here]() to find out more.
-	
--KitchenCraft:
-	Minecraft: PE Version: 0.12.1
-	This is a mod that makes food fun. This adds various stuff to minecraft: pocket edition like stoves, ovens, choping boards, and much more.
-	Please look at the website [here]() to find out more.
 
 -Utilities Plus:
 	Minecraft: PE Version: 0.13.1

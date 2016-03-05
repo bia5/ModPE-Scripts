@@ -1,1 +1,3 @@
-atom.setItem:256,test,Test,apple,0,SwordsAtom;
+//Mod By CrazyWolfy23
+
+bool

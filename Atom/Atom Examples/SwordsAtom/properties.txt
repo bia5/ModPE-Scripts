@@ -1,7 +1,8 @@
-net.crazywolfy23.swordsatom
 Swords Addon
+net.crazywolfy23.swordsatom
 /net/crazywolfy23/SwordsAtom/SwordsAtom.txt
 1.0
-0.13.1
+0.1.2
+0.14.0
 This addon add swords using the atom mod api, which is made proudly by CrazyWolfy23.
 CrazyWolfy23

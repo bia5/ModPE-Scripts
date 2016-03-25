@@ -12,15 +12,18 @@ TODO
 ===============
 -Rework Pipes
 -GUI
+-Textures
 */
 
 /*
 Latest Update
 ================
--Rewrote Mod
+-Rewrote mod.
+-Steam converters now have a timer.
+-Added Gunpowder Generator.
 */
 
-var version = "0.1.8";
+var version = "0.1.8.1";
 var blockPos;
 
 var SurvivalPE = {
@@ -45,7 +48,24 @@ var SurvivalPE = {
 	storage:{
 		liquid:{},
 		energy:{}
-	}
+	},
+	boilerMaxCoal:16,
+	boilerMaxWater:1000,
+	boilerMaxSteam:2000,
+	steamConverterMaxSteam:1000,
+	steamConverterMaxEnergy:1000,
+	coalGenMaxCoal:16,
+	coalGenMaxEnergy:1000,
+	lavaGenMaxLava:1000,
+	lavaGenMaxEnergy:1000,
+	gunpowderGenMaxGunpowder:16,
+	gunpowderGenMaxEnergy:1000,
+	solarGenStartTime:0,
+	solarGenEndTime:10000,
+	solarGenMaxEnergy:1000,
+	steamGenMaxWater:1000,
+	steamGenMaxCoal:16,
+	steamGenMaxEnergy:1000
 }
 var id = {
 	block:{
@@ -108,8 +128,7 @@ Block.setShape(id.block.pipe4,0.25,-0.25,0.25,0.75,1.25,0.75);
 
 function newLevel(){
 	loadVariables();
-	clientMessage("SurvivalPE v"+version+" is made by CrazyWoolfy23");
-	log("Running SurvivalPE v"+version);
+	clientMessage("SurvivalPE v"+version+" is made by CrazyWolfy23");
 }
 
 function leaveGame(){
@@ -118,30 +137,213 @@ function leaveGame(){
 
 function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 	blockPos = getTrueXYZ(x,y,z,side);
+	
+	//Multiblock Boiler
+	if(itemId == id.block.boiler){
+		if(!SurvivalPE.multiblockGen.boiler[blockPos]){
+			SurvivalPE.multiblockGen.boiler[blockPos] = {
+				water:0,
+				coal:0,
+				timer:0,
+				steam:0
+			}
+		}
+	}
+	if(blockId == id.block.boiler){
+		if(itemId == 263 && SurvivalPE.multiblockGen.boiler[[x,y,z]].coal < SurvivalPE.boilerMaxCoal){
+			SurvivalPE.multiblockGen.boiler[[x,y,z]].coal++;
+			Entity.setCarriedItem(Player.getEntity(), 263, Player.getCarriedItemCount()-1,0);
+		}
+		if(itemId == 325 && itemDmg == 8 && (SurvivalPE.multiblockGen.boiler[[x,y,z]].water+999) < SurvivalPE.boilerMaxWater){
+			SurvivalPE.multiblockGen.boiler[[x,y,z]].water+=1000;
+			Player.addItemInventory(325,1,0);
+		}
+	}
+	
+	//Multiblock Steam Converter
+	if(itemId == id.block.steamConverter){
+		if(!SurvivalPE.multiblockGen.steamConverter[blockPos]){
+			SurvivalPE.multiblockGen.steamConverter[blockPos] = {
+				steam:0,
+				timer:0,
+				energy:0
+			}
+		}
+	}
+	
+	//Coal Generator
+	if(itemId == id.block.coalGen){
+		if(!SurvivalPE.generators.coalGen[blockPos]){
+			SurvivalPE.generators.coalGen[blockPos] = {
+				coal:0,
+				timer:0,
+				energy:0
+			}
+		}
+	}
+	if(blockId == id.block.coalGen){
+		if(itemId == 263 && SurvivalPE.generators.coalGen[[x,y,z]].coal < SurvivalPE.coalGenMaxCoal){
+			SurvivalPE.generators.coalGen[[x,y,z]].coal++;
+			Entity.setCarriedItem(Player.getEntity(), 263, Player.getCarriedItemCount()-1,0);
+		}
+	}
+	
+	//Lava Generator
+	if(itemId == id.block.lavaGen){
+		if(!SurvivalPE.generators.lavaGen[blockPos]){
+			SurvivalPE.generators.lavaGen[blockPos] = {
+				lava:0,
+				timer:0,
+				energy:0
+			}
+		}
+	}
+	if(blockId == id.block.lavaGen){
+		if(itemId == 325 && itemDmg == 10 && (SurvivalPE.generators.lavaGen[[x,y,z]].lava+999) < SurvivalPE.lavaGenMaxLava){
+			SurvivalPE.generators.lavaGen[[x,y,z]].lava+=1000;
+			Entity.setCarriedItem(Player.getEntity(), 325, Player.getCarriedItemCount()-1,10);
+			Player.addItemInventory(325,1,0);
+		}
+	}
+	
+	//Gunpowder Generator
+	if(itemId == id.block.gunpowderGen){
+		if(!SurvivalPE.generators.gunpowderGen[blockPos]){
+			SurvivalPE.generators.gunpowderGen[blockPos] = {
+				gunpowder:0,
+				timer:0,
+				energy:0
+			}
+		}
+	}
+	if(blockId == id.block.gunpowderGen){
+		if(itemId == 289 && SurvivalPE.generators.gunpowderGen[[x,y,z]].gunpowder < SurvivalPE.gunpowderGenMaxGunpowder){
+			SurvivalPE.generators.gunpowderGen[[x,y,z]].gunpowder++;
+			Entity.setCarriedItem(Player.getEntity(), 289, Player.getCarriedItemCount()-1,0);
+		}
+	}
+	
+	//Solar Generator
+	if(itemId == id.block.solarGen){
+		if(!SurvivalPE.generators.solarGen[blockPos]){
+			SurvivalPE.generators.solarGen[blockPos] = {
+				energy:0
+			}
+		}
+	}
+	
+	//Steam Generator
+	if(itemId == id.block.steamGen){
+		if(!SurvivalPE.generators.steamGen[blockPos]){
+			SurvivalPE.generators.steamGen[blockPos] = {
+				water:0,
+				coal:0,
+				bTimer:0,
+				steam:0,
+				sTimer:0,
+				energy:0
+			}
+		}
+	}
+	if(blockId == id.block.steamGen){
+		if(itemId == 263 && SurvivalPE.generators.steamGen[[x,y,z]].coal < SurvivalPE.steamGenMaxCoal){
+			SurvivalPE.generators.steamGen[[x,y,z]].coal++;
+			Entity.setCarriedItem(Player.getEntity(), 263, Player.getCarriedItemCount()-1,0);
+		}
+		if(itemId == 325 && itemDmg == 8 && (SurvivalPE.generators.steamGen[[x,y,z]].water+999) < SurvivalPE.steamGenMaxWater){
+			SurvivalPE.generators.steamGen[[x,y,z]].water+=1000;
+			Player.addItemInventory(325,1,0);
+		}
+	}
 }
 
-function destroyBlock(x,y,z,side){}
-function modTick(){}
+function destroyBlock(x,y,z,side){
+	var blockId = Player.getPointedBlockId();
+	
+	//Multiblock Boiler
+	if(blockId == id.block.boiler && SurvivalPE.multiblockGen.boiler[[x,y,z]]){
+		if(SurvivalPE.multiblockGen.boiler[[x,y,z]].coal > 0){
+			Level.dropItem(x,y,z,0,263,SurvivalPE.multiblockGen.boiler[[x,y,z]].coal);
+		}
+		if(SurvivalPE.multiblockGen.boiler[[x,y,z]].timer > 0){
+			explode(x,y,z,5,false); //Test
+		}
+		delete SurvivalPE.multiblockGen.boiler[[x,y,z]];
+	}
+	
+	//Multiblock Steam Converter
+	if(blockId == id.block.steamConverter && SurvivalPE.multiblockGen.steamConverter[[x,y,x]]){
+		if(SurvivalPE.multiblockGen.steamConverter[[x,y,z]].timer > 0){
+			explode(x,y,z,5,false); //Test
+		}
+		delete SurvivalPE.multiblockGen.steamConverter[[x,y,z]];
+	}
+	
+	//Coal Generator
+	if(blockId == id.block.coalGen && SurvivalPE.generators.coalGen[[x,y,z]]){
+		if(SurvivalPE.generators.coalGen[[x,y,z]].coal > 0){
+			Level.dropItem(x,y,z,0,263,SurvivalPE.generators.coalGen[[x,y,z]].coal);
+		}
+		if(SurvivalPE.generators.coalGen[[x,y,z]].timer > 0){
+			explode(x,y,z,5,false); //Test
+		}
+		delete SurvivalPE.generators.coalGen[[x,y,z]];
+	}
+	
+	//Lava Generator
+	if(blockId == id.block.lavaGen && SurvivalPE.generators.lavaGen[[x,y,z]]){
+		if(SurvivalPE.generators.lavaGen[[x,y,z]].timer > 0){
+			explode(x,y,z,5,false); //Test
+		}
+		delete SurvivalPE.generators.lavaGen[[x,y,z]];
+	}
+	
+	//Gunpowder Generator
+	if(blockId == id.block.gunpowderGen && SurvivalPE.generators.gunpowderGen[[x,y,z]]){
+		if(SurvivalPE.generators.gunpowderGen[[x,y,z]].gunpowder > 0){
+			Level.dropItem(x,y,z,0,289,SurvivalPE.generators.gunpowderGen[[x,y,z]].gunpowder);
+		}
+		if(SurvivalPE.generators.gunpowderGen[[x,y,z]].timer > 0){
+			explode(x,y,z,5,false); //Test
+		}
+		delete SurvivalPE.generators.gunpowderGen[[x,y,z]];
+	}
+	
+	//Solar Generator
+	if(blockId == id.block.solarGen && SurvivalPE.generators.solarGen[[x,y,z]]){
+		delete SurvivalPE.generators.solarGen[[x,y,z]];
+	}
+	
+	//Steam Generator
+	if(blockId == id.block.steamGen && SurvivalPE.generators.steamGen[[x,y,z]]){
+		if(SurvivalPE.generators.steamGen[[x,y,z]].coal > 0){
+			Level.dropItem(x,y,z,0,263,SurvivalPE.generators.steamGen[[x,y,z]].coal);
+		}
+		if(SurvivalPE.generators.steamGen[[x,y,z]].timer > 0){
+			explode(x,y,z,10,false);
+		}
+		delete SurvivalPE.generators.steamGen[[x,y,z]];
+	}
+}
+
+function modTick(){
+	//Multiblock Boiler
+	//Multiblock Steam Converter
+	//Coal Generator
+	//Lava Generator
+	//Gunpowder Generator
+	//Solar Generator
+	//Steam Generator
+}
 
 function getTrueXYZ(x,y,z,side){
-	if(side == 0){y = y - 1;}
-	else if(side == 1){y = y + 1;}
-	else if(side == 2){z = z - 1;}
-	else if(side == 3){z = z + 1;}
-	else if(side == 4){x = x - 1;}
-	else if(side == 5){x = x + 1;}
+	if(side == 0) y = y - 1;
+	else if(side == 1) y = y + 1;
+	else if(side == 2) z = z - 1;
+	else if(side == 3) z = z + 1;
+	else if(side == 4) x = x - 1;
+	else if(side == 5) x = x + 1;
 	return [x,y,z];
-}
-
-function log(string){
-	java.io.File(new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE")).mkdirs();
-	var logFile = new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE/log.txt");
-	if(!logFile.exists()) java.io.File(new java.io.File(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftworlds/"+Level.getWorldDir()+"/SurvivalPE/log.txt")).createNewFile();
-	if(logFile.exists()){
-		var out = new java.io.PrintWriter(new java.io.FileWriter(logFile, true));
-		out.println("[SurvivalPE] "+string);
-		out.close();
-	}
 }
 
 loadVariables=function(){

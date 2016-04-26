@@ -13,6 +13,8 @@ TODO
 -Rework Pipes
 -GUI
 -Textures
+-Block Rotations
+-Proper Block Breaking, (Support for tools)
 */
 
 /*
@@ -20,11 +22,12 @@ Latest Update
 ================
 -Rewrote mod.
 -Steam converters now have a timer.
--Added Gunpowder Generator.
+-Fully Added Gunpowder Generator.
 */
 
-var version = "0.1.8.1";
+var version = "0.1.8.2";
 var blockPos;
+var timer;
 
 var SurvivalPE = {
 	multiblockGen:{
@@ -101,12 +104,7 @@ ModPE.setItem(id.item.pipeEnergyExtraction,"pipe_energy_extraction",0,"Energy Ex
 ModPE.setItem(id.item.wrenchBlue,"wrench_blue",0,"Blue Wrench");
 ModPE.setItem(id.item.wrenchRed,"wrench_red",0,"Red Wrench");
 
-Block.defineBlock(id.block.boiler,"Steam Boiler",[
-["machine_bottom",0],["steam_boiler_top",0],["steam_boiler_front",0],["steam_boiler_side",0],["steam_boiler_side",0],["steam_boiler_side",0],
-["machine_bottom",0],["steam_boiler_top",0],["steam_boiler_side",0],["steam_boiler_front",0],["steam_boiler_side",0],["steam_boiler_side",0],
-["machine_bottom",0],["steam_boiler_top",0],["steam_boiler_side",0],["steam_boiler_side",0],["steam_boiler_front",0],["steam_boiler_side",0],
-["machine_bottom",0],["steam_boiler_top",0],["steam_boiler_side",0],["steam_boiler_side",0],["steam_boiler_side",0],["steam_boiler_front",0]
-]);
+Block.defineBlock(id.block.boiler,"Steam Boiler",[]);
 Block.defineBlock(id.block.steamConverter,"Steam Converter",[]);
 Block.defineBlock(id.block.coalGen,"Coal Generator",[]);
 Block.defineBlock(id.block.lavaGen,"Lave Generator",[]);
@@ -326,14 +324,113 @@ function destroyBlock(x,y,z,side){
 	}
 }
 
-function modTick(){
+function modTick(){ //These text will be here until the modticks are complete, so a couple of updates
+	timer++;
+	
 	//Multiblock Boiler
+	for(blockPos in SurvivalPE.multiblockGen.boiler){
+		if(SurvivalPE.multiblockGen.boiler[blockPos].coal > 0 && SurvivalPE.multiblockGen.boiler[blockPos].timer == 0 && SurvivalPE.multiblockGen.boiler[blockPos].steam < SurvivalPE.boilerMaxSteam && SurvivalPE.multiblockGen.boiler[blockPos].water > 999){
+			SurvivalPE.multiblockGen.boiler[blockPos].coal--;
+			SurvivalPE.multiblockGen.boiler[blockPos].water-=100;
+			SurvivalPE.multiblockGen.boiler[blockPos].timer+=200;
+		}
+		if(SurvivalPE.multiblockGen.boiler[blockPos].timer > 0){
+			SurvivalPE.multiblockGen.boiler[blockPos].timer--;
+			if(SurvivalPE.multiblockGen.boiler[blockPos].steam < SurvivalPE.boilerMaxSteam){
+				SurvivalPE.multiblockGen.boiler[blockPos].steam++;
+			}
+		}
+	}
+	
 	//Multiblock Steam Converter
+	for(blockPos in SurvivalPE.multiblockGen.steamConverter){
+		if(SurvivalPE.multiblockGen.steamConverter[blockPos].steam > 99 && SurvivalPE.multiblockGen.steamConverter[blockPos].timer == 0 && SurvivalPE.multiblockGen.steamConverter[blockPos].energy < SurvivalPE.steamConverterMaxEnergy){
+			SurvivalPE.multiblockGen.steamConverter[blockPos].steam-=100;
+			SurvivalPE.multiblockGen.steamConverter[blockPos].timer+=50;
+		}
+		if(SurvivalPE.multiblockGen.steamConverter[blockPos].timer > 0){
+			SurvivalPE.multiblockGen.steamConverter[blockPos].timer--;
+			if(SurvivalPE.multiblockGen.steamConverter[blockPos].energy < SurvivalPE.steamConverterMaxEnergy){
+				SurvivalPE.multiblockGen.steamConverter[blockPos].energy++;
+			}
+		}
+	}
+	
 	//Coal Generator
+	for(blockPos in SurvivalPE.generators.coal[blockPos]){
+		if(SurvivalPE.generators.coal[blockPos].coal > 0 && SurvivalPE.generators.coal[blockPos].timer == 0 && SurvivalPE.generators.coal[blockPos].energy < SurvivalPE.coalGenMaxEnergy){
+			SurvivalPE.generators.coal[blockPos].coal--;
+			SurvivalPE.generators.coal[blockPos].timer+=250;
+		}
+		if(SurvivalPE.generators.coal[blockPos].timer > 0){
+			SurvivalPE.generators.coal[blockPos].timer--;
+			if(SurvivalPE.generators.coal[blockPos].energy < SurvivalPE.coalGenMaxEnergy){
+				SurvivalPE.generators.coal[blockPos].energy++;
+			}
+		}
+	}
+	
 	//Lava Generator
+	for(blockPos in SurvivalPE.generators.lavaGen[blockPos]){
+		if(SurvivalPE.generators.lavaGen[blockPos].lava > 999 && SurvivalPE.generators.lavaGen[blockPos].timer == 0 && SurvivalPE.generators.lavaGen[blockPos].energy < SurvivalPE.lavaGenMaxEnergy){
+			SurvivalPE.generators.lavaGen[blockPos].lava-=1000;
+			SurvivalPE.generators.lavaGen[blockPos].timer+=250
+		}
+		if(SurvivalPE.generators.lavaGen[blockPos].timer > 0){
+			SurvivalPE.generators.lavaGen[blockPos].timer--;
+			if(SurvivalPE.generators.lavaGen[blockPos].energy+1 < SurvivalPE.lavaGenMaxEnergy){
+				SurvivalPE.generators.lavaGen[blockPos].energy+=2;
+			}
+		}
+	}
+	
 	//Gunpowder Generator
+	for(blockPos in SurvivalPE.generators.gunpowderGen[blockPos]){
+		if(SurvivalPE.generators.gunpowderGen[blockPos].gunpowder > 0 && SurvivalPE.generators.gunpowderGen[blockPos].timer == 0 && SurvivalPE.generators.gunpowderGen[blockPos].energy < SurvivalPE.gunpowderGenMaxEnergy){
+			SurvivalPE.generators.gunpowderGen[blockPos].gunpowder--;
+			SurvivalPE.generators.gunpowderGen[blockPos].timer+=250;
+		}
+		if(SurvivalPE.generators.gunpowderGen[blockPos].timer > 0){
+			SurvivalPE.generators.gunpowderGen[blockPos].timer--;
+			if(SurvivalPE.generators.gunpowderGen[blockPos].energy+1 < SurvivalPE.gunpowderGenMaxEnergy){
+				SurvivalPE.generators.gunpowderGen[blockPos].energy++;
+			}
+		}
+	}
+	
 	//Solar Generator
+	for(blockPos in SurvivalPE.generators.solarGen[blockPos]){
+		if(Level.getTimer() > SurvivalPE.solarGenStartTime && Level.getTime() < SurvivalPE.solarGenEndTime && SurvivalPE.generators.solarGen[blockPos].energy < SurvivalPE.solarGenMaxEnergy){
+			SurvivalPE.generators.solarGen[blockPos].energy++;
+		}
+	}
+	
 	//Steam Generator
+	for(blockPos in SurvivalPE.generators.steamGen[blockPos]){
+		if(SurvivalPE.generators.steamGen[blockPos].coal > 0 && SurvivalPE.generators.steamGen[blockPos].water > 999 && SurvivalPE.generators.steamGen[blockPos].bTimer == 0 && SurvivalPE.generators.steamGen[blockPos].steam < SurvivalPE.steamGenMaxSteam){
+			SurvivalPE.generators.steamGen[blockPos].coal--;
+			SurvivalPE.generators.steamGen[blockPos].water-=1000;
+			SurvivalPE.generators.steamGen[blockPos].bTimer+=250;
+		}
+		if(SurvivalPE.generators.steamGen[blockPos].bTimer > 0){
+			SurvivalPE.generators.steamGen[blockPos].bTimer--;
+			if(SurvivalPE.generators.steamGen[blockPos].steam < SurvivalPE.steamGenMaxSteam){
+				SurvivalPE.generators.steamGen[blockPos].steam++;
+			}
+		}
+		if(SurvivalPE.generators.steamGen[blockPos].steam > 99 && SurvivalPE.generators.steamGen[blockPos].sTimer == 0 && SurvivalPE.generators.steamGen[blockPos].energy < SurvivalPE.steamGenMaxEnergy){
+			SurvivalPE.generators.steamGen[blockPos].steam-=100;
+			SurvivalPE.generators.steamGen[blockPos].sTimer+=250;
+		}
+		if(SurvivalPE.generators.steamGen[blockPos].sTimer > 0){
+			SurvivalPE.generators.steamGen[blockPos].sTimer--;
+			if(SurvivalPE.generators.steamGen[blockPos].energy < SurvivalPE.steamGenMaxEnergy){
+				SurvivalPE.generators.steamGen[blockPos].energy++;
+			}
+		}
+	}
+	
+	if(timer == 20) timer = 0;
 }
 
 function getTrueXYZ(x,y,z,side){

@@ -15,17 +15,22 @@ TODO
 -Textures
 -Block Rotations
 -Proper Block Breaking, (Support for tools)
+
+-Machines:
+	-Liquid Pump: Pumps liquids into tanks, machines, and pipes.
+	-Electric Furnace
+	-Block Placer
+	-Block Destroyer
 */
 
 /*
 Latest Update
 ================
--Rewrote mod.
--Steam converters now have a timer.
--Fully Added Gunpowder Generator.
+-Updated Textures.
+-Started Work On Pipes.
 */
 
-var version = "0.1.8.2";
+var version = "0.1.8.3";
 var blockPos;
 var timer;
 
@@ -46,7 +51,11 @@ var SurvivalPE = {
 	},
 	pipes:{
 		steam:{},
-		energy:{}
+		energy:{},
+		steamData:0,
+		steamExData:1,
+		energyData:2,
+		energyExData:3
 	},
 	storage:{
 		liquid:{},
@@ -104,7 +113,7 @@ ModPE.setItem(id.item.pipeEnergyExtraction,"pipe_energy_extraction",0,"Energy Ex
 ModPE.setItem(id.item.wrenchBlue,"wrench_blue",0,"Blue Wrench");
 ModPE.setItem(id.item.wrenchRed,"wrench_red",0,"Red Wrench");
 
-Block.defineBlock(id.block.boiler,"Steam Boiler",[]);
+Block.defineBlock(id.block.boiler,"Steam Boiler",[["steam_boiler_top",0],["steam_boiler_side",0],["steam_boiler_front",0],["steam_boiler_side",0],["steam_boiler_side",0],["steam_boiler_side",0]]);
 Block.defineBlock(id.block.steamConverter,"Steam Converter",[]);
 Block.defineBlock(id.block.coalGen,"Coal Generator",[]);
 Block.defineBlock(id.block.lavaGen,"Lave Generator",[]);
@@ -119,10 +128,10 @@ Block.defineBlock(id.block.pipe4,"pipe4",[],7,false,0);
 Block.defineBlock(id.block.liquidStorage,"Tank",[]);
 Block.defineBlock(id.block.energyStorage,"Spin Wheel",[]);
 
-Block.setShape(id.block.pipe1,0.25,0.25,0.25,0.75,0.75,0.75);
-Block.setShape(id.block.pipe2,-0.25,0.25,0.25,1.25,0.75,0.75);
-Block.setShape(id.block.pipe3,0.25,0.25,-0.25,0.75,0.75,1.25);
-Block.setShape(id.block.pipe4,0.25,-0.25,0.25,0.75,1.25,0.75);
+Block.setShape(id.block.pipe1,0.25,0.25,0.25,0.75,0.75,0.75);  //Defualt
+Block.setShape(id.block.pipe2,-0.25,0.25,0.25,1.25,0.75,0.75); //x
+Block.setShape(id.block.pipe3,0.25,0.25,-0.25,0.75,0.75,1.25); //z
+Block.setShape(id.block.pipe4,0.25,-0.25,0.25,0.75,1.25,0.75); //y
 
 function newLevel(){
 	loadVariables();
@@ -135,6 +144,11 @@ function leaveGame(){
 
 function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 	blockPos = getTrueXYZ(x,y,z,side);
+	
+	//Steam Pipe
+	if(itemId == id.item.pipeSteam){
+		
+	}
 	
 	//Multiblock Boiler
 	if(itemId == id.block.boiler){
@@ -324,7 +338,7 @@ function destroyBlock(x,y,z,side){
 	}
 }
 
-function modTick(){ //These text will be here until the modticks are complete, so a couple of updates
+function modTick(){
 	timer++;
 	
 	//Multiblock Boiler

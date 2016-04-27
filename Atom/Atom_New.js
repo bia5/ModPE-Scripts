@@ -21,11 +21,10 @@ Contributers
 /*
 Latest Version
 ================
--Rewrote Mod, should work better.
--Will Add Spanish Tanslations Soon! Thanks Khristian_Kun (RedstoneGunMade).
+-Added Some New Functions.
 */
 
-var version = "0.1.2";
+var version = "0.1.3";
 var mcpeVersion = "0.14.0";
 var hasLoaded = false;
 var shouldCheckVersions = true;
@@ -117,7 +116,7 @@ function readProperties(){
 	log("Reading Properties.");
 	var stops = [];
 	for(var i = 0; <mods.length; i++){
-		var propString = mods[i].propString.split("\n");
+		var propString = mods[i].propString.split("\n"); //BL says theres an error here
 		if(shouldCheckVersions){
 			if(version == propString[4] && mcpeVersion == propString[5]){
 				mods[i].properties = {
@@ -249,6 +248,8 @@ function readAtomLine(string,i_1,i){
 		if(s_4[0] == "say"){
 			say(s_5[0]);
 		}
+		if(s_4[0] == "Entity.setPos"){}
+		if(s_4[0] == "Entity.setGamertag"){}
 	}
 	log("Finished Reading Atom Line: "+string+".");
 }

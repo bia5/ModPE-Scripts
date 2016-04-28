@@ -22,12 +22,20 @@ Contributers
 Latest Version
 ================
 -Added Some New Functions.
+-Fixed Errors (Thanks to darkserver)
+-Turned off version checker.
+-Added 'entity' as a possible variable.
+-Removed the 'delete' function as of now.
+
+Known Bugs
+================
+-Won't load mods.
 */
 
-var version = "0.1.3";
-var mcpeVersion = "0.14.0";
+var version = "0.1.4";
+var mcpeVersion = "0.14.2";
 var hasLoaded = false;
-var shouldCheckVersions = true;
+var shouldCheckVersions = false;
 var modFolders = [];
 var mods = {};
 var atomFolder = file(new android.os.Environment.getExternalStorageDirectory().getPath()+"/games/com.mojang/minecraftpe/Atom/");
@@ -71,6 +79,14 @@ function log(string){
 	}
 }
 
+function plainLog(string){
+	if(logFile.exists()){
+		var out = new java.io.PrintWriter(new java.io.FileWriter(logFile, true));
+		out.println(string);
+		out.close();
+	}
+}
+
 function file(string){
 	return new java.io.File(string);
 }
@@ -105,18 +121,17 @@ function loadProperties(){
 		}
 	}
 	for(var i = 0; i<notMods.length; i++){
+		log(modFolders[parseInt(notMods[i])].toString()+" isn't a mod.");
 		delete modFolders[parseInt(notMods[i])];
 	}
-	delete notMods;
-	delete modFolders
 	log("Finished Loading Properties.");
 }
 
 function readProperties(){
 	log("Reading Properties.");
 	var stops = [];
-	for(var i = 0; <mods.length; i++){
-		var propString = mods[i].propString.split("\n"); //BL says theres an error here
+	for(var i = 0; i<mods.length; i++){
+		var propString = mods[i].propString.split("\n");
 		if(shouldCheckVersions){
 			if(version == propString[4] && mcpeVersion == propString[5]){
 				mods[i].properties = {
@@ -146,9 +161,9 @@ function readProperties(){
 				authors:propString[7]
 			}
 		}
-		delete mods[i].propString;
 	}
 	for(var i = 0; i<stops.length; i++){
+		clientMessage(mods[parseInt(stops[i])].propString);
 		delete mods[parseInt(stops[i])];
 	}
 	log("Finished Reading Properties.");
@@ -168,8 +183,9 @@ function makeVariables(){
 
 function loadMainFiles(){
 	log("Loading Main Files.");
-	for(var i = 0; i<mods.length; i++){
+	for(var i = 0; i<mods.length; i++){//Mods Are Not Detected, Im guessing its being deleted somewhere before it reaches here.
 		readAtomFile(mods[i].properties.mainFile,i);
+		clientMessage(mods[i].properties.name);
 	}
 	log("Finished Loading Main Files.");
 }
@@ -193,6 +209,9 @@ function readAtomFile(string,nmb){
 		for(var i = 0; i<s_1.length; i++){
 			readAtomLine(s_1,2,nmb);
 		}
+	}
+	else{
+		log(tempFile.getPath()+" doesn't exists.");
 	}
 	log("Finished Reading Atom File At: "+string+".");
 }
@@ -218,10 +237,8 @@ function readAtomLine(string,i_1,i){
 		if(s_3[0] == "file"){
 			mkNewVar(i,"file",s_3[1],s_3[2]);
 		}
-		if(s_3[0] == "delete"){
-			if(mods[i].variables.vars[s_3[1]].exists()){
-				delete mods[i].variables.vars[s_3[1]];
-			}
+		if(s_3[0] == "entity"){
+			mkNewVar(i,"entity",s_3[1],s_3[2]);
 		}
 	}
 	if(i_1 == 1){
@@ -244,14 +261,33 @@ function readAtomLine(string,i_1,i){
 			delete temp_s_1;
 		}
 	}
-	if(i_1 == 2){	//Run Code
+	if(i_1 == 2){
+		//Basic Functions
 		if(s_4[0] == "say"){
-			say(s_5[0]);
+			say(i,s_5[0]);
 		}
+		if(s_4[0] == "log"){
+			plainLog("["+mods[i].properties.name+"] "+s_5[0]);
+		}
+		
+		//Enitiy Functions
 		if(s_4[0] == "Entity.setPos"){}
 		if(s_4[0] == "Entity.setGamertag"){}
+		
+		//Level Functions
+		if(s_4[0] == "Level.setBlock"){}
+		if(s_4[0] == "Level.setTime"){}
+		
+		//Atom Functions
+		if(s_4[0] == "Atom.setItem"){}
+		if(s_4[0] == "Atom.setBlock"){}
 	}
 	log("Finished Reading Atom Line: "+string+".");
+}
+
+function say(i,text){
+	clientMessage(text);
+	plainLog("["+mods[i].properties.name+"] "+text);
 }
 
 function getBool(bool,i){

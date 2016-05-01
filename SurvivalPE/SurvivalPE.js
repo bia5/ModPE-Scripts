@@ -26,11 +26,11 @@ TODO
 /*
 Latest Update
 ================
--Updated Textures.
--Started Work On Pipes.
+-Worked More On Pipes.
+-Removed The Message When You Open The World.
 */
 
-var version = "0.1.8.3";
+var version = "0.1.8.4";
 var blockPos;
 var timer;
 
@@ -77,7 +77,11 @@ var SurvivalPE = {
 	solarGenMaxEnergy:1000,
 	steamGenMaxWater:1000,
 	steamGenMaxCoal:16,
-	steamGenMaxEnergy:1000
+	steamGenMaxEnergy:1000,
+	steamPipeMaxSteam:200,
+	steamPipeExMaxSteam:100,
+	energyPipeMaxEnergy:500,
+	energyPipeExMaxEnergy:250
 }
 var id = {
 	block:{
@@ -135,7 +139,6 @@ Block.setShape(id.block.pipe4,0.25,-0.25,0.25,0.75,1.25,0.75); //y
 
 function newLevel(){
 	loadVariables();
-	clientMessage("SurvivalPE v"+version+" is made by CrazyWolfy23");
 }
 
 function leaveGame(){
@@ -147,7 +150,46 @@ function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 	
 	//Steam Pipe
 	if(itemId == id.item.pipeSteam){
-		
+		placePipe(SurvivalPE.pipes.steamData,x,y,z);
+		if(!SurvivalPE.pipes.steam[blockPos]){
+			SurvivalPE.pipes.steam[blockPos] = {
+				type:SurvivalPE.pipes.steamData,
+				steam:0
+			}
+		}
+	}
+	
+	//Extraction Steam Pipe
+	if(itemId == id.item.pipeSteamExtraction){
+		placePipe(SurvivalPE.pipes.steamExData,x,y,z);
+		if(!SurvivalPE.pipes.steam[blockPos]){
+			SurvivalPE.pipes.steam[blockPos] = {
+				type:SurvivalPE.pipes.steamExData,
+				steam:0
+			}
+		}
+	}
+	
+	//Energy Pipe
+	if(itemId == id.item.pipeEnergy){
+		placePipe(SurvivalPE.pipes.energyData,x,y,z);
+		if(!SurvivalPE.pipes.energy[blockPos]){
+			SurvivalPE.pipes.energy[blockPos] = {
+				type:SurvivalPE.pipes.energyData,
+				energy:0
+			}
+		}
+	}
+	
+	//Extraction Energy Pipe
+	if(itemId == id.item.pipeEnergyExtraction){
+		placePipe(SurvivalPE.pipes.energyExData,x,y,z);
+		if(!SurvivalPE.pipes.energy[blockPos]){
+			SurvivalPE.pipes.energy[blockPos] = {
+				type:SurvivalPE.pipes.energyExData,
+				energy:0
+			}
+		}
 	}
 	
 	//Multiblock Boiler
@@ -445,6 +487,37 @@ function modTick(){
 	}
 	
 	if(timer == 20) timer = 0;
+}
+
+function placePipe(type,x,y,z){
+	var sides=[[x,y-1,z],[x,y+1,z],[x,y,z-1],[x,y,z+1],[x-1,y,z],[x+1,y,z]];
+	var hasPlaced = false;
+	for(var i = 0; i<sides.length; i++){
+		var a;
+		if(i == 0 || i == 1){
+			a = id.block.pipe4;
+		}
+		else if(i == 2 || i == 3){
+			a = id.block.pipe3;
+		}
+		else if(i == 4 || i == 5){
+			a = id.block.pipe2
+		}
+		
+		if(isWire(sides[i][0],sides[i][1],sides[i][2])){
+			hasPlaced = true;
+			Level.setTile(x,y,z,a,type);
+		}
+	}
+	if(hasPlaced == false){
+		Level.setTile(x,y,z,id.block.pipe1,type);
+	}
+}
+
+function isWire(x,y,z){
+	if(Level.getTile(x,y,z) == id.block.pipe1 || Level.getTile(x,y,z) == id.block.pipe2 || Level.getTile(x,y,z) == id.block.pipe3 || Level.getTile(x,y,z) == id.block.pipe4){
+		return true;
+	}
 }
 
 function getTrueXYZ(x,y,z,side){

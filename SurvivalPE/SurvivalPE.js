@@ -1,5 +1,4 @@
 //Mod By CrazyWolfy23
-//Get Updates at http://crazywolfy23.github/io/minecraft/SurvivalPE/
 
 /*
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. 
@@ -10,11 +9,14 @@ visit http://creativecommons.org/licenses/by-sa/4.0/.
 /*
 TODO
 ===============
--Rework Pipes
 -GUI
 -Textures
 -Block Rotations
 -Proper Block Breaking, (Support for tools)
+
+-Storage
+	-Tank
+	-Spin Wheel
 
 -Machines:
 	-Liquid Pump: Pumps liquids into tanks, machines, and pipes.
@@ -26,11 +28,11 @@ TODO
 /*
 Latest Update
 ================
--Worked More On Pipes.
--Removed The Message When You Open The World.
+-Properly Added Pipes (With No Functions!, (Even Better!, (Filler!))).
+-Added Pipe Movement, (Using spe 1.7 as a refrence, (Bugginess!, (Yay)))
 */
 
-var version = "0.1.8.4";
+var version = "0.1.8.5";
 var blockPos;
 var timer;
 
@@ -313,6 +315,7 @@ function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 
 function destroyBlock(x,y,z,side){
 	var blockId = Player.getPointedBlockId();
+	var blockDmg = Player.getPointedBlockDamage();
 	
 	//Multiblock Boiler
 	if(blockId == id.block.boiler && SurvivalPE.multiblockGen.boiler[[x,y,z]]){
@@ -377,6 +380,26 @@ function destroyBlock(x,y,z,side){
 			explode(x,y,z,10,false);
 		}
 		delete SurvivalPE.generators.steamGen[[x,y,z]];
+	}
+	
+	//Steam Pipe
+	if(isWire(x,y,z) && blockDmg == SurvivalPE.pipes.steamData){
+		delete SurvivalPE.pipes.steam[[x,y,z]];
+	}
+	
+	//Steam Extraction Pipe
+	if(isWire(x,y,z) && blockDmg == SurvivalPE.pipes.steamExData){
+		delete SurvivalPE.pipes.steam[[x,y,z]];
+	}
+	
+	//Energy Pipe
+	if(isWire(x,y,z) && blockDmg == SurvivalPE.pipes.energyData){
+		delete SurvivalPE.pipes.energy[[x,y,z]];
+	}
+	
+	//Energy Extraction Pipe
+	if(isWire(x,y,z) && blockDmg == SurvivalPE.pipes.energyExData){
+		delete SurvivalPE.pipes.energy[[x,y,z]];
 	}
 }
 
@@ -487,6 +510,56 @@ function modTick(){
 	}
 	
 	if(timer == 20) timer = 0;
+}
+
+function sendEnergy(x,y,z,xx,yy,zz,energy){
+	var sides=[[x,y-1,z],[x,y+1,z],[x,y,z-1],[x,y,z+1],[x-1,y,z],[x+1,y,z]];
+	if(isWire(x,y,z)){
+		var amt = 0;
+		var places = [];
+		for(var i = 0; i<sides.length; i++){
+			var sx = sides[i][0];
+			var sy = sides[i][1];
+			var sz = sides[i][2];
+			var tile = Level.getTile(sx,sy,sz);
+			var data = Level.getData(sx,sy,sz);
+			if([xx,yy,zz] != [sx,sy,sz] && ((isWire(sx,sy,sz) && data == SurvivalPE.pipes.energyData))){
+				amt++;
+				places.push([sides[i][0],sides[i][1],sides[i][2]]);
+			}
+		}
+		if(amt > 0){
+			var rnd = Math.floor(Math.random()*places.length);
+			if(isWire(places[rnd])){
+				sendEnergy(places[rnd][0],places[rnd][1],places[rnd][2],x,y,z,energy);
+			}
+		}
+	}
+}
+
+function sendSteam(x,y,z,xx,yy,zz,steam){
+	var sides=[[x,y-1,z],[x,y+1,z],[x,y,z-1],[x,y,z+1],[x-1,y,z],[x+1,y,z]];
+	if(isWire(x,y,z)){
+		var amt = 0;
+		var places = [];
+		for(var i = 0; i<sides.length; i++){
+			var sx = sides[i][0];
+			var sy = sides[i][1];
+			var sz = sides[i][2];
+			var tile = Level.getTile(sx,sy,sz);
+			var data = Level.getData(sx,sy,sz);
+			if([xx,yy,zz] != [sx,sy,sz] && ((isWire(sx,sy,sz) && data == SurvivalPE.pipes.steamData))){
+				amt++;
+				places.push([sides[i][0],sides[i][1],sides[i][2]]);
+			}
+		}
+		if(amt > 0){
+			var rnd = Math.floor(Math.random()*places.length);
+			if(isWire(places[rnd][0],places[rnd][1],places[rnd][2])){
+				sendSteam(places[rnd][0],places[rnd][1],places[rnd][2],x,y,z,steam);
+			}
+		}
+	}
 }
 
 function placePipe(type,x,y,z){

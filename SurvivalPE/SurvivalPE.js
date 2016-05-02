@@ -28,11 +28,13 @@ TODO
 /*
 Latest Update
 ================
--Properly Added Pipes (With No Functions!, (Even Better!, (Filler!))).
--Added Pipe Movement, (Using spe 1.7 as a refrence, (Bugginess!, (Yay)))
+-Stuff In Steam Pipes Goes Somewhere!
+-Stuff In Energy Pipes Goes Somewhere!
+-Added Spin Wheel.
+-It Now cost pipes to place pipes.
 */
 
-var version = "0.1.8.5";
+var version = "0.1.9"; //Like PC! Kinda...
 var blockPos;
 var timer;
 
@@ -83,7 +85,8 @@ var SurvivalPE = {
 	steamPipeMaxSteam:200,
 	steamPipeExMaxSteam:100,
 	energyPipeMaxEnergy:500,
-	energyPipeExMaxEnergy:250
+	energyPipeExMaxEnergy:250,
+	energyStorageMaxEnergy:10000
 }
 var id = {
 	block:{
@@ -107,8 +110,8 @@ var id = {
 		pipeSteamExtraction:501,
 		pipeEnergy:502,
 		pipeEnergyExtraction:503,
-		wrenchBlue:504,
-		wrenchRed:505
+		wrenchBlue:504, //Rotates
+		wrenchRed:505	//Destroys
 	}
 }
 
@@ -122,7 +125,7 @@ ModPE.setItem(id.item.wrenchRed,"wrench_red",0,"Red Wrench");
 Block.defineBlock(id.block.boiler,"Steam Boiler",[["steam_boiler_top",0],["steam_boiler_side",0],["steam_boiler_front",0],["steam_boiler_side",0],["steam_boiler_side",0],["steam_boiler_side",0]]);
 Block.defineBlock(id.block.steamConverter,"Steam Converter",[]);
 Block.defineBlock(id.block.coalGen,"Coal Generator",[]);
-Block.defineBlock(id.block.lavaGen,"Lave Generator",[]);
+Block.defineBlock(id.block.lavaGen,"Lava Generator",[]);
 Block.defineBlock(id.block.gunpowderGen,"Gunpowder Generator",[]);
 Block.defineBlock(id.block.solarGen,"Solar Generator",[]);
 Block.defineBlock(id.block.steamGen,"Steam Generator",[]);
@@ -150,9 +153,20 @@ function leaveGame(){
 function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 	blockPos = getTrueXYZ(x,y,z,side);
 	
+	//Spin Wheel
+	if(itemId == id.block.energyStorage){
+		if(!SurvivalPE.storage.energy[blockPos]){
+			SurvivalPE.storage.energy[blockPos] = {
+				type:basic,
+				energy:0
+			}
+		}
+	}
+	
 	//Steam Pipe
 	if(itemId == id.item.pipeSteam){
 		placePipe(SurvivalPE.pipes.steamData,x,y,z);
+		Entity.setCarriedItem(Player.getEntity(), Player.getCarriedItem(), Player.getCarriedItemCount()-1,0);
 		if(!SurvivalPE.pipes.steam[blockPos]){
 			SurvivalPE.pipes.steam[blockPos] = {
 				type:SurvivalPE.pipes.steamData,
@@ -164,6 +178,7 @@ function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 	//Extraction Steam Pipe
 	if(itemId == id.item.pipeSteamExtraction){
 		placePipe(SurvivalPE.pipes.steamExData,x,y,z);
+		Entity.setCarriedItem(Player.getEntity(), Player.getCarriedItem(), Player.getCarriedItemCount()-1,0);
 		if(!SurvivalPE.pipes.steam[blockPos]){
 			SurvivalPE.pipes.steam[blockPos] = {
 				type:SurvivalPE.pipes.steamExData,
@@ -175,6 +190,7 @@ function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 	//Energy Pipe
 	if(itemId == id.item.pipeEnergy){
 		placePipe(SurvivalPE.pipes.energyData,x,y,z);
+		Entity.setCarriedItem(Player.getEntity(), Player.getCarriedItem(), Player.getCarriedItemCount()-1,0);
 		if(!SurvivalPE.pipes.energy[blockPos]){
 			SurvivalPE.pipes.energy[blockPos] = {
 				type:SurvivalPE.pipes.energyData,
@@ -186,6 +202,7 @@ function useItem(x,y,z,itemId,blockId,side,itemDmg,blockDmg){
 	//Extraction Energy Pipe
 	if(itemId == id.item.pipeEnergyExtraction){
 		placePipe(SurvivalPE.pipes.energyExData,x,y,z);
+		Entity.setCarriedItem(Player.getEntity(), Player.getCarriedItem(), Player.getCarriedItemCount()-1,0);
 		if(!SurvivalPE.pipes.energy[blockPos]){
 			SurvivalPE.pipes.energy[blockPos] = {
 				type:SurvivalPE.pipes.energyExData,
@@ -523,7 +540,7 @@ function sendEnergy(x,y,z,xx,yy,zz,energy){
 			var sz = sides[i][2];
 			var tile = Level.getTile(sx,sy,sz);
 			var data = Level.getData(sx,sy,sz);
-			if([xx,yy,zz] != [sx,sy,sz] && ((isWire(sx,sy,sz) && data == SurvivalPE.pipes.energyData))){
+			if([xx,yy,zz] != [sx,sy,sz] && ((isWire(sx,sy,sz) && data == SurvivalPE.pipes.energyData) || tile == id.block.energyStorage)){
 				amt++;
 				places.push([sides[i][0],sides[i][1],sides[i][2]]);
 			}
@@ -533,11 +550,14 @@ function sendEnergy(x,y,z,xx,yy,zz,energy){
 			if(isWire(places[rnd])){
 				sendEnergy(places[rnd][0],places[rnd][1],places[rnd][2],x,y,z,energy);
 			}
+			if(Level.getTile(places[rnd][0],places[rnd][1],places[rnd][2]) == id.block.energyStorage && (SurvivalPE.storage.energy[places[rnd]].energy+energy) <= SurvivalPE.energyStorageMaxEnergy){
+				SurvivalPE.storage.energy[places[rnd]].energy+=energy;
+			}
 		}
 	}
 }
 
-function sendSteam(x,y,z,xx,yy,zz,steam){
+function sendSteam(x,y,z,xx,yy,zz,steam){//		TANKS!
 	var sides=[[x,y-1,z],[x,y+1,z],[x,y,z-1],[x,y,z+1],[x-1,y,z],[x+1,y,z]];
 	if(isWire(x,y,z)){
 		var amt = 0;
@@ -548,7 +568,7 @@ function sendSteam(x,y,z,xx,yy,zz,steam){
 			var sz = sides[i][2];
 			var tile = Level.getTile(sx,sy,sz);
 			var data = Level.getData(sx,sy,sz);
-			if([xx,yy,zz] != [sx,sy,sz] && ((isWire(sx,sy,sz) && data == SurvivalPE.pipes.steamData))){
+			if([xx,yy,zz] != [sx,sy,sz] && ((isWire(sx,sy,sz) && data == SurvivalPE.pipes.steamData) || tile == id.block.steamConverter)){
 				amt++;
 				places.push([sides[i][0],sides[i][1],sides[i][2]]);
 			}
@@ -557,6 +577,10 @@ function sendSteam(x,y,z,xx,yy,zz,steam){
 			var rnd = Math.floor(Math.random()*places.length);
 			if(isWire(places[rnd][0],places[rnd][1],places[rnd][2])){
 				sendSteam(places[rnd][0],places[rnd][1],places[rnd][2],x,y,z,steam);
+			}
+			
+			if(Level.getTile(places[rnd][0],places[rnd][1],places[rnd][2]) == id.block.steamConverter && (SurvivalPE.multiblockGen.steamConverter[places[rnd]].steam+steam) <= SurvivalPE.steamConverterMaxSteam){
+				SurvivalPE.multiblockGen.steamConverter[places[rnd]].steam+=steam;
 			}
 		}
 	}
